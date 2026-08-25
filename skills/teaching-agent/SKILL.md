@@ -79,11 +79,34 @@ Then `clarify` with exactly these three:
 - **"Different angle"** → pitch a different mechanic for the same concept, or
   the same mechanic aimed at a different part of it. Ask again. Never pitch the
   same game twice.
-- **"Just explain it"** → no game. Explain the concept properly, in prose. That
-  is a legitimate outcome, not a failure.
+- **"Just explain it"** → no artifact. Explain it in prose, under the limit in
+  *Explaining in Prose* below. A legitimate outcome, not a failure.
 
 Do not build anything before the user picks. Generating a game they did not ask
 for wastes the reveal.
+
+## Explaining in Prose
+
+Three paths end here: "Just explain it", a concept that suits neither mode, and
+"What did I just learn?" after playing. All three obey the same limit.
+
+**Under 150 words. Three short paragraphs at most. No headings, no numbered
+sections, no bold-lead bullet lists.** This is a chat message, not an article —
+a wall of text is the thing the whole skill exists to avoid, and shipping one
+because the topic is interesting is still shipping one.
+
+Then **always end with a `clarify`** offering a way back into something
+teachable. A concept with no game still sits next to one that has:
+
+> The history is the why. The mechanism — a network feeling its way downhill —
+> is a thing you can actually drive.
+>
+>   1. Show me the mechanism
+>   2. A different concept
+>   3. That's enough
+
+Never end a prose answer flat. If you had nothing to offer, the concept was a
+poor fit and you should have said so in one sentence.
 
 ## Step 2a — WATCH: Render the Animation
 
@@ -201,9 +224,9 @@ actually happened:
   4. Show me the real math
 ```
 
-- **"What did I just learn?"** — explain the concept properly now, in prose,
-  anchored to what they did in the game. Refer to their actual play if they told
-  you the score. This is the payoff; give it real sentences, not four bullets.
+- **"What did I just learn?"** — explain it now, anchored to what they actually
+  did. Refer to their score if they gave you one. This is the payoff, so give it
+  real sentences rather than bullets — but the prose limit still applies.
 - **"Make it harder"** — Step 5.
 - **"Show me the real math"** — write out the actual equation the engine
   computed. It is a real implementation, so this is safe: `route_and_sort` is
@@ -281,6 +304,12 @@ budget or a routing decision all map. Concepts with no interactive core at all
 - **Never claim a game exists for `race_algorithm` or `build_and_test`.** Every
   other mechanic in `concept_to_template.md` is built and working.
 - **At most 2 sentences** in Step 1 and Step 3. The game is the interface.
+- **Prose answers stay under 150 words** and end with a `clarify`. See
+  *Explaining in Prose*.
+- **Never show the user a tool error.** A failed command, a missing file, a
+  traceback — none of it belongs in your message. Retry it, work around it, or
+  carry on with what you already know. If you genuinely cannot proceed, say what
+  you cannot do in one plain sentence and offer something you can.
 - **Always `clarify` for the choices** — never a numbered list in your prose,
   and never both.
 - Never narrate the machinery: no "let me generate", no "calling the script",
@@ -296,38 +325,43 @@ budget or a routing decision all map. Concepts with no interactive core at all
 
 ## Common Pitfalls
 
-1. **Leaking your planning into the message.** "Vou executar agora", "following
+1. **A 600-word essay because the topic was interesting.** The history of
+   backprop is fascinating and it is still a wall of text in a chat window.
+   Under 150 words, then offer the mechanism — which *is* a game.
+2. **Pasting a tool error into the reply.** "FileNotFoundError: …" tells the
+   user nothing they can act on and makes the whole thing look broken.
+3. **Leaking your planning into the message.** "Vou executar agora", "following
    Step 1 of the skill", "the cached file is precision_recall.json" — none of
    this is for the user, and it has already happened in a drifted language.
    Write the message, not the plan for the message.
-2. **Pitching the concept instead of the mechanic.** "You'll learn how MoE
+4. **Pitching the concept instead of the mechanic.** "You'll learn how MoE
    routing works" tells them nothing about what they are about to do.
-3. **Explaining before they play.** The insight text is written to land after
+5. **Explaining before they play.** The insight text is written to land after
    the game. Saying it first is the single most expensive mistake here.
 4. **Authoring GAME_DATA from memory of this file.** Read the format guide. The
    placeholder names and required fields are exact.
 5. **Rewriting or dropping either output line.** `[Open the game](http://…)`
    never opens the rail, and posting only the `#preview/` line leaves a blank
    message on any surface without one. Paste both lines exactly as printed.
-6. **Using a placeholder the engine doesn't fill.** It renders as literal
+8. **Using a placeholder the engine doesn't fill.** It renders as literal
    `{braces}` on screen. Each template's list is in the format guide.
-7. **`temp` left at 1 in `predict_and_verify`.** The distribution comes out
+9. **`temp` left at 1 in `predict_and_verify`.** The distribution comes out
    nearly flat and the game teaches nothing. 6–7 for unit-ish vectors.
-8. **A single `quad` landscape in `parameter_control`.** It converges from
+10. **A single `quad` landscape in `parameter_control`.** It converges from
    everywhere, so "where you start matters" never shows. Add a `sin`.
-9. **Claiming precision/recall or exploration/exploitation has no game.** Both
+11. **Claiming precision/recall or exploration/exploitation has no game.** Both
    are built — `balance_tradeoff` and `explore_grid`, each with cached GAME_DATA.
-10. **Separable classes in `balance_tradeoff`.** If every positive scores above
+12. **Separable classes in `balance_tradeoff`.** If every positive scores above
    every negative, a perfect threshold exists and the game disproves its own
    lesson. At least one negative must outrank a positive.
-11. **One peak in `explore_grid`.** With nothing to be lured by, there is no
+13. **One peak in `explore_grid`.** With nothing to be lured by, there is no
    exploration dilemma and every playthrough "finds the optimum".
-12. **Fewer than 3 destinations in `route_and_sort`.** The compute-saving
+14. **Fewer than 3 destinations in `route_and_sort`.** The compute-saving
    arithmetic only reads as a saving with enough destinations — use 6–8 when the
    point is efficiency.
-13. **Switching templates to dodge a validation error.** Read stderr; it names
+15. **Switching templates to dodge a validation error.** Read stderr; it names
    the field.
-14. **Rebuilding by editing the template.** Difficulty lives in the data.
+16. **Rebuilding by editing the template.** Difficulty lives in the data.
 
 ## Verification Checklist
 
@@ -340,6 +374,8 @@ budget or a routing decision all map. Concepts with no interactive core at all
 - [ ] A cached GAME_DATA was used when one matched the topic
 - [ ] Both lines from `--serve` were pasted verbatim, neither reworded
 - [ ] The message contained no planning, no step numbers, no file names
+- [ ] No tool error, path or traceback appeared in the reply
+- [ ] Any prose answer stayed under 150 words and ended with a `clarify`
 - [ ] Every sentence was in the language the user wrote in
 - [ ] No part of the concept was explained before they played
 - [ ] Follow-up `clarify` came after play, not instead of it
