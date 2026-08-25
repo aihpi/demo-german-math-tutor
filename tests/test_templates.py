@@ -6,7 +6,7 @@ Run:  python3 tests/test_templates.py
 This is the one check that fails if a template abstraction leaks: every JSON in
 tested_gamedata/ must produce a complete, marker-free HTML file.
 """
-import json, pathlib, sys, tempfile
+import json, pathlib, re, sys, tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SKILL = ROOT / "skills" / "teaching-games"
@@ -51,7 +51,6 @@ def build_all(tmp: pathlib.Path) -> None:
                  "missed", "falseAlarms", "caught",
                  "bestX", "bestY", "bestValue", "globalValue", "reveals", "budget",
                  "strategy", "exploitPercent", "uniqueRegions", "optimalReveals"}
-        import re
         # explore_grid keys its insight text by outcome; everything else has one string
         texts = ([i["body"] for i in data["insights"].values()] if "insights" in data
                  else [data["insight"]])
@@ -82,9 +81,42 @@ def rejects_bad_input(tmp: pathlib.Path) -> None:
         raise AssertionError("accepted an unknown template name")
 
 
+def docs_match_reality() -> None:
+    """No document may describe a template that exists as missing.
+
+    SKILL.md once said balance_tradeoff was not built, hours after it was built.
+    The agent read that and refused to make the game — correctly, it followed its
+    instructions. The instructions were the bug, and nothing caught the drift.
+    """
+    built = {p.stem for p in (SKILL / "templates").glob("*.html")} - {"base"}
+    docs = {name: (SKILL / name).read_text() for name in
+            ("SKILL.md", "references/concept_to_template.md",
+             "references/gamedata_format_guide.md", "README.md")}
+
+    # Scope is the sentence, not the line: the bug that shipped had the template
+    # name on one line and "not built" wrapped onto the next. A wider character
+    # window instead false-positives on neighbouring prose.
+    absent = re.compile(r"not built|are missing|do(?:es)? not exist|no engine|unbuilt", re.I)
+    for name, text in docs.items():
+        flat = re.sub(r"\s+", " ", text)
+        for sentence in re.split(r"(?<=[.!?])\s+", flat):
+            if not absent.search(sentence):
+                continue
+            for t in sorted(built):
+                assert t not in sentence, (
+                    f"{name} calls the built template '{t}' missing:\n    {sentence.strip()}")
+    print(f"  ok  no doc calls any of the {len(built)} built templates missing")
+
+    for t in sorted(built):
+        for name in ("references/concept_to_template.md", "references/gamedata_format_guide.md"):
+            assert t in docs[name], f"{name} never mentions the built template '{t}'"
+    print("  ok  every built template appears in both reference docs")
+
+
 if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as d:
         tmp = pathlib.Path(d)
         build_all(tmp)
         rejects_bad_input(tmp)
+        docs_match_reality()
     print("\nall template builds passed")

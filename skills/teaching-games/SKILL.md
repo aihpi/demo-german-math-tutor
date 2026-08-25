@@ -14,7 +14,7 @@ metadata:
 ## Overview
 
 You teach a concept by building a game the user plays, then explaining what they
-just did. The game is a real HTML page generated from one of three engines; you
+just did. The game is a real HTML page generated from one of five engines; you
 supply only the concept-specific content as a JSON object called GAME_DATA.
 
 The engines are already written and already correct. You never write HTML,
@@ -132,7 +132,9 @@ actually happened:
 - **"Show me the real math"** — write out the actual equation the engine
   computed. It is a real implementation, so this is safe: `route_and_sort` is
   argmax over a gate, `parameter_control` is `x ← x − η·∇f(x)`,
-  `predict_and_verify` is `softmax(qᵢ·kⱼ/√d)`.
+  `predict_and_verify` is `softmax(qᵢ·kⱼ/√d)`, `balance_tradeoff` is the
+  confusion matrix behind precision, recall and F1, and `explore_grid` is a
+  Gaussian mixture over the declared peaks.
 - **"New concept"** — back to Step 1 with the new topic.
 
 ## Step 5 — Make It Harder
@@ -149,25 +151,37 @@ rebuild, serve, and hand over the new URL. What to reach for:
   at a different `freq`), or a start point behind a ridge.
 - `predict_and_verify` — more items, or feature vectors that make two candidates
   genuinely close.
+- `balance_tradeoff` — push the item classes further into each other so the best
+  achievable F1 drops, or move the curve minimum away from the slider default.
+- `explore_grid` — cut `totalBudget`, or move the decoy peak nearer the starting
+  corner than the global one.
 
 Say in one sentence what got harder and why that is the interesting case. Then
 hand over the URL and stop, exactly as in Step 3.
 
 ## When Not to Build a Game
 
-Three engines exist. `balance_tradeoff`, `race_algorithm` and `build_and_test`
-are **not built** — precision/recall, bias/variance, quantization,
-exploration/exploitation, sorting races and architecture design have no engine.
+**Before deciding a concept has no game, check whether it contains one.** Most
+concepts that do not map whole have a piece that does — offer that piece:
 
-Say so plainly and teach the concept directly:
+> Diffusion has two halves and I can only game one. The denoising loop I would
+> have to just explain — but the Transformer half is attention over image
+> patches, and I can put you inside that. Want it?
 
-> That one is a tradeoff between two competing things, and I don't have a game
-> for that shape yet. Let me show you where it bites instead.
+Backprop → the update step (`parameter_control`). CNNs → routing patches to
+feature detectors (`route_and_sort`). RAG → routing a query to chunks
+(`route_and_sort`). Diffusion transformers → attention over patches
+(`predict_and_verify`). Naming which half is a game and which is prose is a
+better answer than refusing the whole thing.
 
-Never bend a concept onto an engine that misrepresents it. A routing game about
-precision and recall would teach the wrong thing, which is worse than no game.
-Concepts with no interactive core at all — history, naming, why a paper mattered
-— are always prose.
+Only two templates from the project plan are missing: `race_algorithm` and
+`build_and_test`. Sorting races, algorithm comparison and network architecture
+design have no engine. Say so plainly and teach those directly.
+
+Never bend a concept onto an engine that misrepresents it — but "does not map"
+is a high bar, and a tradeoff, a threshold, a distribution, a search under
+budget or a routing decision all map. Concepts with no interactive core at all
+— history, naming, why a paper mattered — are always prose.
 
 ## Constraints
 
@@ -176,7 +190,8 @@ Concepts with no interactive core at all — history, naming, why a paper matter
 - **Never invent a URL.** Only ever paste one that `--serve` printed.
 - **Never explain the concept before they play.** Steps 1 and 3 are pitch and
   handover; the teaching happens in Step 4.
-- **Never claim a game exists for the three unbuilt templates.**
+- **Never claim a game exists for `race_algorithm` or `build_and_test`.** Every
+  other mechanic in `concept_to_template.md` is built and working.
 - **At most 2 sentences** in Step 1 and Step 3. The game is the interface.
 - **Always `clarify` for the choices** — never a numbered list in your prose,
   and never both.
@@ -197,12 +212,19 @@ Concepts with no interactive core at all — history, naming, why a paper matter
    nearly flat and the game teaches nothing. 6–7 for unit-ish vectors.
 6. **A single `quad` landscape in `parameter_control`.** It converges from
    everywhere, so "where you start matters" never shows. Add a `sin`.
-7. **Fewer than 3 destinations in `route_and_sort`.** The compute-saving
+7. **Claiming precision/recall or exploration/exploitation has no game.** Both
+   are built — `balance_tradeoff` and `explore_grid`, each with cached GAME_DATA.
+8. **Separable classes in `balance_tradeoff`.** If every positive scores above
+   every negative, a perfect threshold exists and the game disproves its own
+   lesson. At least one negative must outrank a positive.
+9. **One peak in `explore_grid`.** With nothing to be lured by, there is no
+   exploration dilemma and every playthrough "finds the optimum".
+10. **Fewer than 3 destinations in `route_and_sort`.** The compute-saving
    arithmetic only reads as a saving with enough destinations — use 6–8 when the
    point is efficiency.
-8. **Switching templates to dodge a validation error.** Read stderr; it names
+11. **Switching templates to dodge a validation error.** Read stderr; it names
    the field.
-9. **Rebuilding by editing the template.** Difficulty lives in the data.
+12. **Rebuilding by editing the template.** Difficulty lives in the data.
 
 ## Verification Checklist
 
@@ -215,4 +237,6 @@ Concepts with no interactive core at all — history, naming, why a paper matter
 - [ ] No part of the concept was explained before they played
 - [ ] Follow-up `clarify` came after play, not instead of it
 - [ ] "Make it harder" changed data only, and produced a new URL
+- [ ] A concept that did not map whole was decomposed before being refused
+- [ ] Only `race_algorithm` and `build_and_test` were described as missing
 - [ ] Unbuildable concepts got an honest explanation, not a bent game
