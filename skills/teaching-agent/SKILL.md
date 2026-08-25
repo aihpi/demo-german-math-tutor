@@ -147,6 +147,10 @@ delegate_task(tasks: [
 ])
 ```
 
+A marker line must start its own line with `[`. Nothing before it — not a
+stray character, not "Here:". One leading character turns the link into
+prose the app will not render.
+
 Three things that will break it if you change them:
 
 - **Subagents have no `execute_code`** — it is blocked for children. They must use

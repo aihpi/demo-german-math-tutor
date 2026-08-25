@@ -124,6 +124,27 @@ def scene_side_is_sound() -> None:
     for e in index["entries"]:
         assert e["template"] in templates, f"scene index names unknown template {e['template']}"
 
+    # The page states twice which concepts get both modes; the two must agree.
+    # They did not, and the agent followed the stale one — rendering a
+    # comparison_split for precision/recall, which that template cannot express.
+    out_doc = (SKILL / "references/concept_to_output.md").read_text()
+
+    def table_after(header):
+        seg = out_doc.split(header, 1)[1]
+        rows = set()
+        for ln in seg.splitlines():
+            if ln.startswith("|") and "---" not in ln and "concept" not in ln.lower():
+                rows.add(ln.split("|")[1].strip().lower().strip("`"))
+            elif rows and not ln.startswith("|"):
+                break
+        return rows
+
+    both, deleg = table_after("**Both** —"), table_after("### Both modes")
+    assert both == deleg, ("concept_to_output.md disagrees with itself about which "
+                           f"concepts get both modes: 'Both' has {sorted(both)}, "
+                           f"delegation has {sorted(deleg)}")
+    print(f"  ok  both-mode lists agree ({len(both)}: {', '.join(sorted(both))})")
+
     guide = (SKILL / "references/scenedata_format_guide.md").read_text()
     out = (SKILL / "references/concept_to_output.md").read_text()
     for t in templates:

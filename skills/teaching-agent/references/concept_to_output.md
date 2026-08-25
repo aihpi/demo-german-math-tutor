@@ -42,15 +42,21 @@ attention weights · next-token probability · softmax and temperature · embedd
 similarity · exploration vs exploitation · hyperparameter search · A/B testing ·
 bandits
 
-**Both** — worth seeing *and* worth doing:
+**Both** — worth seeing *and* worth doing. **This list is short on purpose:**
+`comparison_split` is the only animation template and it shows two grids of
+nodes with two counters. A concept earns a WATCH only if that is genuinely its
+shape.
 
 | concept | WATCH shows | PLAY makes them do |
 |---|---|---|
-| MoE routing | 16 experts firing vs 3 | route tokens under time pressure |
-| precision vs recall | the two metrics moving apart | pick the threshold and eat the errors |
-| gradient descent | the ball converging vs diverging | choose the learning rate |
-| overfitting | train and test error separating | slide model complexity |
-| KV cache | full recompute vs prefix reuse | classify what can be reused |
+| moe routing | 16 experts firing vs 3 | route tokens under time pressure |
+| kv cache | 16 blocks recomputed vs 3 reused | classify what can be reused |
+
+**Everything else on this page is single-mode**, however tempting a second mode
+sounds. Precision vs recall is two curves over a slider; gradient descent is a
+ball on a landscape; overfitting is two diverging lines. None of those is two
+grids of dots, and forcing them through `comparison_split` renders a picture
+that contradicts the lesson. They stay PLAY-only until a template fits them.
 
 **Neither** — history, naming, why a paper mattered, what a library is called.
 Answer in prose. Not everything wants a picture.
@@ -73,8 +79,8 @@ Send them together. Wall time is the slower child (~45 s), not the sum (~60 s).
 
 | concept | WATCH | PLAY |
 |---|---|---|
-| dense vs MoE | `comparison_split` | `route_and_sort` |
-| autoregressive vs diffusion | `comparison_split` | — *(no game; WATCH only)* |
+| moe routing | `comparison_split` | `route_and_sort` |
+| kv cache | `comparison_split` | `route_and_sort` |
 
 Only two concepts genuinely have both today, because `comparison_split` is the
 only animation template. Everything else is single-mode.
