@@ -178,6 +178,137 @@ Placeholders: `{score}` `{top}` `{topP}` `{query}` (pairwise only).
 
 ---
 
+## `balance_tradeoff`
+
+One slider, two meters that move in opposite directions, and no correct answer.
+**Two shapes, pick one.**
+
+**A. Classification (`items`).** Each item has a `score` 0–1 and `positive`
+true/false. The engine builds the confusion matrix live and derives the metrics.
+
+```json
+{
+  "title": "SPAM FILTER",
+  "intro": { "headline": "…", "body": "…" },
+  "param": { "label": "Spam threshold", "min": 0.05, "max": 0.95, "default": 0.5, "step": 0.01 },
+  "buckets": { "above": "🚫 Spam folder", "below": "📥 Inbox" },
+  "metrics": { "a": "precision", "b": "recall" },
+  "objective": "f1",
+  "items": [ { "label": "YOU HAVE WON", "score": 0.97, "positive": true } ],
+  "insight": "…{threshold}…{metricA}…{metricB}…{best}…{caught}…{missed}…{falseAlarms}…"
+}
+```
+
+Metric names: `precision`, `recall`, `specificity`, `fpr`, `accuracy`, `f1`.
+`objective` is the one being scored against the best achievable threshold.
+
+**The classes must overlap.** If every positive scores above every negative, a
+threshold exists with a perfect score and the game teaches the opposite of its
+own lesson. At least one negative must outrank a positive. 12–16 items.
+
+**B. Two declared curves (`curves`).** No items, no classifier. Both curves use
+the same term vocabulary as `parameter_control`, plus `exp` (`amp`, `rate`) and
+`inv` (`a`, `shift`).
+
+```json
+{
+  "param": { "label": "Model complexity", "min": 1, "max": 12, "default": 2, "step": 0.1 },
+  "objective": "min-sum",
+  "curves": {
+    "a": { "label": "Bias²",    "terms": [ {"type":"exp","amp":9,"rate":-0.45}, {"type":"const","c":0.3} ] },
+    "b": { "label": "Variance", "terms": [ {"type":"quad","a":0.075}, {"type":"const","c":0.2} ] }
+  }
+}
+```
+
+`objective` is `min-sum` (total error, U-shaped) or `max-sum`. **Make one curve
+fall and the other rise**, or there is no tradeoff to find.
+
+Placeholders: `{threshold}` `{best}` `{score}` `{metricA}` `{metricB}` `{nameA}`
+`{nameB}` `{caught}` `{missed}` `{falseAlarms}` (last three: items shape only).
+
+---
+
+## `explore_grid`
+
+Fog-of-war tiles over a hidden landscape, a fixed budget of reveals, and the
+choice of whether to probe near your best result or look somewhere new.
+
+```json
+{
+  "title": "HYPERPARAMETER HUNT",
+  "intro": { "headline": "…", "body": "…" },
+  "grid": { "width": 10, "height": 10, "totalBudget": 25, "budgetLabel": "GPU hours left" },
+  "axes": { "x": { "label": "Learning rate", "range": "0.0001 → 0.1" },
+            "y": { "label": "Batch size", "range": "8 → 512" } },
+  "landscape": {
+    "peaks": [ { "x": 3, "y": 6, "value": 95.2, "radius": 2.0, "label": "Global optimum" },
+               { "x": 7, "y": 2, "value": 88.5, "radius": 1.5, "label": "Local optimum" } ],
+    "baseValue": 60, "noiseAmount": 3, "valueLabel": "Validation accuracy (%)"
+  },
+  "strategies": { "bayesianLike": "…", "randomSearch": "…", "mixed": "…" },
+  "insights": {
+    "foundGlobal": { "title": "…", "body": "…" },
+    "foundLocal":  { "title": "…", "body": "…" },
+    "scattered":   { "title": "…", "body": "…" }
+  }
+}
+```
+
+**This template uses `insights` (plural, keyed), not `insight`.** All three keys
+are required; the engine picks one from the outcome. "Found the global optimum"
+is decided by whether the best revealed tile lies inside the top peak's
+`radius` — position, not value, because noise can push a local peak's reading
+above a sample near the global one.
+
+- **At least two peaks**, or there is no exploration dilemma. Put the second
+  one nearer the likely starting corner than the global peak.
+- `noiseAmount` well under the gap between peak values — noise larger than the
+  gap makes the landscape unreadable.
+- `totalBudget` around a quarter of the tiles. All 100 reveals is not a game.
+
+Placeholders: `{bestX}` `{bestY}` `{bestValue}` `{globalValue}` `{reveals}`
+`{budget}` `{strategy}` `{exploitPercent}` `{uniqueRegions}` `{optimalReveals}`.
+
+---
+
+## `customization` — optional, every template
+
+Every field is optional and every default is sensible. Omit the whole block and
+the game still looks right. Add fields to give a concept a mood.
+
+```json
+"customization": {
+  "theme":       { "accent": "#FF4444", "secondary": "#4A9EFF", "success": "#50C878",
+                   "error": "#FF4444", "background": "#1a1a1a", "surface": "#252525",
+                   "particleEffect": "sparks" },
+  "sounds":      { "enabled": true, "correct": "chirp", "wrong": "buzz", "complete": "fanfare" },
+  "difficulty":  { "mode": "adaptive", "startLevel": 1, "maxLevel": 5, "adaptiveThreshold": 0.8 },
+  "titleScreen": { "emoji": "🧠", "flavor": "…", "instructions": "…",
+                   "showScore": true, "showStreak": true },
+  "endScreen":   { "grading": [ { "min": 90, "emoji": "🏆", "label": "Expert!" } ],
+                   "shareText": "I scored {score}!", "showReplayButton": true },
+  "animations":  { "speed": "normal", "transitions": "slide", "celebrationIntensity": 3 },
+  "layout":      { "mobileOptimized": true },
+  "multiplayer": { "enabled": false, "players": ["Ada", "Alan"], "showLeaderboard": true }
+}
+```
+
+- `particleEffect`: `sparks` · `confetti` · `ripple` · `none`
+- `sounds.correct`: `chirp` · `ding` · `pop` · `chord`; `.wrong`: `buzz` · `thud`
+  · `descend`; `.complete`: `fanfare` · `tada` · `calm`. Oscillators, no files.
+- `difficulty.mode`: `fixed` · `linear` · `adaptive` · `sudden`
+- `animations.speed`: `slow` · `normal` · `fast` · `instant`
+- `multiplayer` is **local hot-seat** — players take turns on one machine and a
+  leaderboard appears at the end. Nothing is networked.
+- `grading` replaces the whole ladder, so give every band you want, ending at
+  `"min": 0`.
+
+**Match the mood to the concept.** Overfitting deserves a red accent, no
+particles and `speed: "fast"`. A first-contact explainer deserves the playful
+default. Do not set customization at random — an unset field is better than a
+wrong one.
+
 ## Common mistakes
 
 | symptom | cause |
@@ -188,3 +319,6 @@ Placeholders: `{score}` `{top}` `{topP}` `{query}` (pairwise only).
 | ball converges instantly from every start | landscape is a single `quad` — add a `sin` |
 | ambiguous item never accepts the second expert | name in `also` does not match a `destinations[].name` |
 | exit code 2, "missing required field" | read stderr, it names the field |
+| `balance_tradeoff` scores 100 too easily | the item classes separate cleanly — make them overlap |
+| `explore_grid` always says "found the optimum" | only one peak, so every tile is in its basin |
+| customization ignored | a typo'd key is silently dropped; check spelling against the list |

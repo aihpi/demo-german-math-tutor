@@ -1,7 +1,7 @@
 # Teaching Games — a Hermes Agent skill
 
 Teaches a concept by generating a playable browser game, serving it on loopback,
-and explaining afterwards what the player just did. Three game engines. Each one is a complete HTML page with two markers punched
+and explaining afterwards what the player just did. Five game engines. Each one is a complete HTML page with two markers punched
 out of it; `generate_game.py` fills them in and writes a standalone file that
 needs no server, no network, and no build step to open.
 
@@ -20,6 +20,8 @@ python3 skills/teaching-games/scripts/serve_game.py --file /tmp/game.html
 | `route_and_sort` | items fall, click the destination each belongs to | MoE routing, MoE routing (hard), ticket triage |
 | `parameter_control` | a slider sets step size, a ball walks a landscape | gradient descent, gradient ascent / reward |
 | `predict_and_verify` | guess a distribution, then see the model's | attention weights, next-word probability |
+| `balance_tradeoff` | one slider, two meters that fight | precision/recall (spam filter), bias/variance |
+| `explore_grid` | spend a fixed budget to find something hidden | hyperparameter search, A/B testing |
 
 The model-facing spec for authoring GAME_DATA is
 [`references/gamedata_format_guide.md`](references/gamedata_format_guide.md); the
@@ -105,8 +107,18 @@ working fallback that costs nothing.
 
 **This is the day-1 check in the project plan. Do it before anything else.**
 
+## Customization
+
+Every engine reads an optional `customization` block from GAME_DATA via the
+shared runtime in `templates/base.js` (theme, Web Audio sounds, difficulty
+curve, title and end screens, animation speed, and local hot-seat multiplayer).
+Every field is optional; the tested GAME_DATA files that omit the block render
+exactly as they did before it existed.
+
+Multiplayer is **hot-seat**, not networked — players take one machine in turns
+and a leaderboard appears at the end.
+
 ## Not built yet
 
-`balance_tradeoff`, `race_algorithm` and `build_and_test` do not exist.
-`balance_tradeoff` is the one the scripted demo needs (Round 2, precision vs
-recall); the other two are only reached by audience-choice topics.
+`race_algorithm` and `build_and_test` do not exist. Neither appears in the
+scripted demo; they are only reached by audience-choice topics.

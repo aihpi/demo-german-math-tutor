@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Teaching Game</title>
+<style>
+/*__BASE_CSS__*/
+body { padding: 18px 24px 30px; display: block; }
+#main { display: grid; grid-template-columns: 1.15fr 1fr; gap: 22px; margin-top: 16px; align-items: start; }
+#board { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.bucket h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .9px; color: var(--dim); margin-bottom: 9px; }
+.bucket { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 13px; min-height: 190px; }
+.chip { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 7px 10px; margin-bottom: 6px;
+        border-radius: 7px; background: var(--raised); border-left: 4px solid var(--line-hi); font-size: 14px; }
+.chip.pos { border-left-color: var(--red); }
+.chip.neg { border-left-color: var(--green); }
+.chip.moved { animation: tg-flash .45s ease-out; }
+@keyframes tg-flash { from { background: var(--accent); color: #1a1a1a; } }
+.chip s { color: var(--faint); font-variant-numeric: tabular-nums; font-size: 12.5px; text-decoration: none; }
+.meter { margin-bottom: 14px; }
+.meter .lab { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; }
+.meter .lab b { font-variant-numeric: tabular-nums; }
+.track { height: 12px; border-radius: 6px; background: var(--raised); overflow: hidden; }
+.track i { display: block; height: 100%; border-radius: 6px; transition: width .18s; }
+canvas { width: 100%; height: 210px; display: block; margin-top: 4px; }
+.controls { display: flex; align-items: center; gap: 16px; margin-top: 18px; flex-wrap: wrap; }
+.controls input[type=range] { flex: 1; min-width: 220px; }
+#pVal { font-size: 17px; font-weight: 700; min-width: 60px; }
+#verdict { margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="top" style="border:0;padding:0 0 10px">
+  <h1 id="title"></h1>
+  <div class="stat"><b id="mA">–</b><span id="lA"></span></div>
+  <div class="stat"><b id="mB">–</b><span id="lB"></span></div>
+  <div class="stat"><b id="mObj">–</b><span id="lObj"></span></div>
+</div>
+<p class="sub" id="sub"></p>
+
+<div id="main">
+  <div>
+    <div id="board">
+      <div class="bucket"><h3 id="bAbove"></h3><div id="above"></div></div>
+      <div class="bucket"><h3 id="bBelow"></h3><div id="below"></div></div>
+    </div>
+    <div class="controls">
+      <label id="pLabel"></label>
+      <input id="p" type="range">
+      <span id="pVal" class="num accent"></span>
+      <button id="lock" class="primary">Lock it in</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2 id="plotTitle">The tradeoff</h2>
+    <div class="meter"><div class="lab"><span id="nA"></span><b id="vA">–</b></div>
+      <div class="track"><i id="fA" style="background:var(--accent)"></i></div></div>
+    <div class="meter"><div class="lab"><span id="nB"></span><b id="vB">–</b></div>
+      <div class="track"><i id="fB" style="background:var(--blue)"></i></div></div>
+    <canvas id="cv"></canvas>
+    <p class="sub" id="plotNote" style="font-size:12.5px;margin-top:6px"></p>
+  </div>
+</div>
+<div class="card hide" id="verdict"><h2>Result</h2><p class="insight" id="verdictBody"></p></div>
+<div class="overlay" id="overlay"></div>
+
+<script>
+const GAME_DATA = /*__GAME_DATA__*/;
+/*__BASE_JS__*/
+
+const $ = id => document.getElementById(id);
+const IT = GAME_DATA.items || null;               // shape A: classification
+const CV = GAME_DATA.curves || null;              // shape B: two declared curves
+if (!IT && !CV) throw new Error("balance_tradeoff needs either `items` or `curves`");
+const P  = Object.assign({ label: "Threshold", min: 0, max: 1, default: 0.5, step: 0.01 }, GAME_DATA.param);
+const BK = Object.assign({ above: "Flagged", below: "Allowed" }, GAME_DATA.buckets);
+const OBJ = GAME_DATA.objective || (IT ? "f1" : "min-sum");
+const TH = TG.cfg.theme;
+
+/* ---- metrics ---------------------------------------------------------- */
+const confusion = t => {
+  let TP = 0, FP = 0, FN = 0, TN = 0;
+  IT.forEach(i => { const up = i.score >= t;
+    if (i.positive) up ? TP++ : FN++; else up ? FP++ : TN++; });
+  return { TP, FP, FN, TN };
+};
+const safe = (n, d) => d ? n / d : 0;
+const METRIC = {
+  precision:   c => safe(c.TP, c.TP + c.FP),
+  recall:      c => safe(c.TP, c.TP + c.FN),
+  specificity: c => safe(c.TN, c.TN + c.FP),
+  fpr:         c => safe(c.FP, c.FP + c.TN),
+  accuracy:    c => safe(c.TP + c.TN, c.TP + c.TN + c.FP + c.FN),
+  f1:          c => { const p = METRIC.precision(c), r = METRIC.recall(c); return safe(2 * p * r, p + r); },
+};
+const M = Object.assign({ a: "precision", b: "recall" }, GAME_DATA.metrics);
+
+const fa = CV ? TG.curve(CV.a.terms).f : null;
+const fb = CV ? TG.curve(CV.b.terms).f : null;
+
+// Both shapes answer the same three questions, so everything downstream is shared.
+const readA = t => IT ? METRIC[M.a](confusion(t)) : fa(t);
+const readB = t => IT ? METRIC[M.b](confusion(t)) : fb(t);
+const score = t => IT ? METRIC[OBJ](confusion(t))
+                      : (OBJ === "max-sum" ? readA(t) + readB(t) : -(readA(t) + readB(t)));
+
+/* ---- sweep: the whole tradeoff curve, computed once -------------------- */
+const N = 200;
+const sweep = Array.from({ length: N + 1 }, (_, k) => {
+  const t = P.min + (P.max - P.min) * k / N;
+  return { t, a: readA(t), b: readB(t), s: score(t) };
+});
+const best = sweep.reduce((m, p) => p.s > m.s ? p : m, sweep[0]);
+
+/* ---- rendering -------------------------------------------------------- */
+const cv = $("cv"), ctx = cv.getContext("2d");
+let W = 0, H = 0, locked = false;
+const t = () => +$("p").value;
+
+function resize() {
+  const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
+  W = r.width; H = r.height; cv.width = W * d; cv.height = H * d;
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  draw();
+}
+
+function plotPoint(p) {
+  // Items mode draws a genuine ROC (fpr vs tpr). Curves mode plots A against B.
+  const x = IT ? METRIC.fpr(confusion(p.t)) : p.a;
+  const y = IT ? METRIC.recall(confusion(p.t)) : p.b;
+  const lo = CV ? Math.min(...sweep.map(q => q.a)) : 0, hi = CV ? Math.max(...sweep.map(q => q.a)) : 1;
+  const lo2 = CV ? Math.min(...sweep.map(q => q.b)) : 0, hi2 = CV ? Math.max(...sweep.map(q => q.b)) : 1;
+  return [26 + (x - lo) / ((hi - lo) || 1) * (W - 40), H - 24 - (y - lo2) / ((hi2 - lo2) || 1) * (H - 42)];
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.strokeStyle = "#3a3a3a"; ctx.lineWidth = 1;
+  ctx.strokeRect(26, 12, W - 40, H - 36);
+  if (IT) {                                   // chance line
+    ctx.setLineDash([4, 4]); ctx.beginPath();
+    ctx.moveTo(...plotPoint({ t: P.max })); ctx.lineTo(...plotPoint({ t: P.min }));
+    ctx.strokeStyle = "#3a3a3a"; ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.beginPath();
+  sweep.forEach((p, i) => { const [x, y] = plotPoint(p); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+  ctx.strokeStyle = TH.secondary; ctx.lineWidth = 2.5; ctx.stroke();
+
+  const [bx, by] = plotPoint(best);
+  ctx.beginPath(); ctx.arc(bx, by, 5, 0, 7); ctx.fillStyle = TH.success; ctx.fill();
+
+  const [cx, cy] = plotPoint({ t: t(), a: readA(t()), b: readB(t()) });
+  ctx.beginPath(); ctx.arc(cx, cy, 7, 0, 7); ctx.fillStyle = TH.accent; ctx.fill();
+  ctx.strokeStyle = TH.background; ctx.lineWidth = 2.5; ctx.stroke();
+}
+
+function paintBoard() {
+  if (!IT) return;
+  const th = t();
+  [["above", i => i.score >= th], ["below", i => i.score < th]].forEach(([id, pred]) => {
+    const host = $(id), want = IT.filter(pred);
+    host.innerHTML = want.map(i =>
+      `<div class="chip ${i.positive ? "pos" : "neg"}" data-k="${i.label}">
+         <span>${i.label}</span><s>${i.score.toFixed(2)}</s></div>`).join("");
+  });
+}
+
+function render() {
+  const th = t(), a = readA(th), b = readB(th);
+  const fmt = v => IT ? (v * 100).toFixed(0) + "%" : v.toFixed(2);
+  $("pVal").textContent = th.toFixed(2);
+  $("mA").textContent = $("vA").textContent = fmt(a);
+  $("mB").textContent = $("vB").textContent = fmt(b);
+  const span = arr => { const lo = Math.min(...arr), hi = Math.max(...arr); return v => ((v - lo) / ((hi - lo) || 1)) * 100; };
+  const nA = IT ? (v => v * 100) : span(sweep.map(p => p.a));
+  const nB = IT ? (v => v * 100) : span(sweep.map(p => p.b));
+  $("fA").style.width = Math.max(0, Math.min(100, nA(a))) + "%";
+  $("fB").style.width = Math.max(0, Math.min(100, nB(b))) + "%";
+  $("mObj").textContent = IT ? (score(th) * 100).toFixed(0) + "%" : Math.abs(score(th)).toFixed(2);
+  paintBoard(); draw();
+}
+
+$("lock").onclick = () => {
+  if (locked) return;
+  locked = true;
+  const th = t(), pct = Math.round(Math.min(1, IT ? safe(score(th), best.s)
+                                                  : safe(Math.abs(best.s), Math.abs(score(th)))) * 100);
+  TG.sfx(pct >= 70 ? "correct" : "wrong");
+  const r = $("lock").getBoundingClientRect();
+  if (pct >= 70) TG.burst(r.left + r.width / 2, r.top, TH.accent);
+  const c = IT ? confusion(th) : {};
+  const g = TG.grade(pct);
+  $("verdictBody").innerHTML = `${g.emoji} <b>${g.label}</b> — ` + TG.fill(GAME_DATA.insight, {
+    threshold: th.toFixed(2), best: best.t.toFixed(2), score: pct,
+    metricA: IT ? (readA(th) * 100).toFixed(0) : readA(th).toFixed(2),
+    metricB: IT ? (readB(th) * 100).toFixed(0) : readB(th).toFixed(2),
+    nameA: M.a, nameB: M.b,
+    missed: c.FN ?? 0, falseAlarms: c.FP ?? 0, caught: c.TP ?? 0,
+  });
+  $("verdict").classList.remove("hide");
+  $("lock").disabled = true;
+};
+
+$("p").oninput = () => { if (locked) { locked = false; $("lock").disabled = false; $("verdict").classList.add("hide"); } render(); };
+
+$("title").textContent = GAME_DATA.title;
+$("sub").innerHTML     = GAME_DATA.subtitle || "";
+$("pLabel").textContent = P.label;
+$("bAbove").textContent = BK.above;
+$("bBelow").textContent = BK.below;
+$("nA").textContent = $("lA").textContent = IT ? M.a : CV.a.label;
+$("nB").textContent = $("lB").textContent = IT ? M.b : CV.b.label;
+$("lObj").textContent = IT ? OBJ : "combined";
+$("plotTitle").textContent = IT ? "ROC curve" : "The tradeoff";
+$("plotNote").textContent = IT
+  ? "Blue is every threshold. Green is the best one. Orange is you."
+  : `Blue traces ${CV.a.label} against ${CV.b.label}. Green is the best point. Orange is you.`;
+Object.assign($("p"), { min: P.min, max: P.max, step: P.step, value: P.default });
+
+addEventListener("resize", resize);
+TG.title($("overlay"), GAME_DATA.intro.headline, GAME_DATA.intro.body, () => {
+  $("overlay").classList.add("hide"); resize(); render();
+});
+render();
+</script>
+</body>
+</html>

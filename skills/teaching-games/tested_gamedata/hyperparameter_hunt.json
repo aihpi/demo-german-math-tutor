@@ -1,0 +1,52 @@
+{
+  "title": "HYPERPARAMETER HUNT",
+  "subtitle": "Find the best settings — but every experiment costs GPU time.",
+  "intro": {
+    "headline": "You have <span class=\"accent\">25 GPU hours</span>",
+    "body": "Each tile is one training run. Click to spend an hour and see the validation accuracy. Somewhere in here is the best combination — but you cannot afford to try them all, and the tile you spend now is a tile you cannot spend later."
+  },
+  "grid": { "width": 10, "height": 10, "totalBudget": 25, "budgetLabel": "GPU hours left" },
+  "axes": {
+    "x": { "label": "Learning rate", "range": "0.0001 → 0.1" },
+    "y": { "label": "Batch size", "range": "8 → 512" }
+  },
+  "landscape": {
+    "peaks": [
+      { "x": 3, "y": 6, "value": 95.2, "radius": 2.0, "label": "Global optimum" },
+      { "x": 7, "y": 2, "value": 88.5, "radius": 1.5, "label": "Local optimum" },
+      { "x": 1, "y": 8, "value": 82.1, "radius": 1.0, "label": "Local optimum" }
+    ],
+    "baseValue": 60,
+    "noiseAmount": 3,
+    "valueLabel": "Validation accuracy (%)"
+  },
+  "strategies": {
+    "bayesianLike": "Concentrating near your best result — that is exploitation.",
+    "randomSearch": "Spreading out across the space — that is exploration.",
+    "mixed": "Mixing exploration with exploitation."
+  },
+  "insights": {
+    "foundGlobal": {
+      "title": "Found the optimum",
+      "body": "You reached {bestValue}% at ({bestX}, {bestY}) using {reveals} of {budget} experiments, spending {exploitPercent}% of them near your best-known point. That is Bayesian optimization done by hand: sample a little, then let the good results pull your next sample toward them. Real tuners do exactly this, they just keep a probabilistic model of the surface instead of a hunch."
+    },
+    "foundLocal": {
+      "title": "Stuck on a local optimum",
+      "body": "You topped out at {bestValue}%, but {globalValue}% was sitting somewhere you never looked. You committed to the first promising region — {exploitPercent}% of your experiments clustered near your running best. That is the exploitation trap: every experiment spent confirming a good result is one not spent finding a better one, and the surface never tells you which peak you are standing on."
+    },
+    "scattered": {
+      "title": "Explorer at heart",
+      "body": "You found {bestValue}% by covering {uniqueRegions} separate regions in {reveals} experiments. Pure exploration does find the global optimum — it just pays full price for it. A tuner that started narrowing after the first few hits would have got here in roughly {optimalReveals}. Exploration buys information; exploitation spends it."
+    }
+  },
+  "config": { "endRevealAll": true, "showPlayerPath": true },
+  "customization": {
+    "titleScreen": { "emoji": "🗺️", "flavor": "The best settings are hiding. Compute is finite.",
+                     "instructions": "Click a tile to run that experiment. Green is good. You get 25." },
+    "theme": { "accent": "#FFD700" },
+    "endScreen": { "grading": [ { "min": 98, "emoji": "🏆", "label": "Bayesian brain!" },
+                                { "min": 92, "emoji": "🔍", "label": "Good search" },
+                                { "min": 85, "emoji": "🎲", "label": "Local optimum" },
+                                { "min": 0,  "emoji": "💸", "label": "Wasted compute" } ] }
+  }
+}

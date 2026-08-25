@@ -1,0 +1,131 @@
+{
+  "title": "SPAM FILTER",
+  "subtitle": "Every email the model scores. You pick where the line falls.",
+  "intro": {
+    "headline": "Where do you draw the <span class=\"accent\">line</span>?",
+    "body": "The classifier has scored each email 0–1 for how spammy it looks. You choose the threshold. Catch more spam and you start blocking real mail; let it through and the inbox fills with junk. There is no threshold that wins both."
+  },
+  "param": {
+    "label": "Spam threshold",
+    "min": 0.05,
+    "max": 0.95,
+    "default": 0.5,
+    "step": 0.01
+  },
+  "buckets": {
+    "above": "🚫 Spam folder",
+    "below": "📥 Inbox"
+  },
+  "metrics": {
+    "a": "precision",
+    "b": "recall"
+  },
+  "objective": "f1",
+  "items": [
+    {
+      "label": "YOU HAVE WON $10,000,000",
+      "score": 0.97,
+      "positive": true
+    },
+    {
+      "label": "cheap backlinks, act now",
+      "score": 0.93,
+      "positive": true
+    },
+    {
+      "label": "crypto doubling scheme",
+      "score": 0.88,
+      "positive": true
+    },
+    {
+      "label": "FREE SEO audit!!!",
+      "score": 0.81,
+      "positive": true
+    },
+    {
+      "label": "Dear Sir/Madam — loan offer",
+      "score": 0.74,
+      "positive": true
+    },
+    {
+      "label": "Invoice #4471 from Acme",
+      "score": 0.66,
+      "positive": false
+    },
+    {
+      "label": "Re: your invoice is overdue",
+      "score": 0.62,
+      "positive": true
+    },
+    {
+      "label": "Your package is delayed",
+      "score": 0.6,
+      "positive": false
+    },
+    {
+      "label": "URGENT: verify your account",
+      "score": 0.58,
+      "positive": true
+    },
+    {
+      "label": "Conference registration",
+      "score": 0.41,
+      "positive": false
+    },
+    {
+      "label": "Re: paper draft feedback",
+      "score": 0.33,
+      "positive": false
+    },
+    {
+      "label": "Lunch on Thursday?",
+      "score": 0.21,
+      "positive": false
+    },
+    {
+      "label": "Standup notes — Tuesday",
+      "score": 0.14,
+      "positive": false
+    },
+    {
+      "label": "Mum: call me when free",
+      "score": 0.06,
+      "positive": false
+    }
+  ],
+  "insight": "At threshold {threshold} you hit <b>{metricA}% precision</b> and <b>{metricB}% recall</b> — you caught {caught} spam, missed {missed}, and wrongly binned {falseAlarms} real emails. The best F1 sits at {best}. There is no setting that wins both, and that is the whole point: moving the line trades one error for the other. Which error is worse is not a maths question — a blocked invoice costs more than a scam in the inbox, so a bank tunes this differently to a mailing list.",
+  "customization": {
+    "titleScreen": {
+      "emoji": "📥",
+      "flavor": "One slider. Two ways to be wrong.",
+      "instructions": "Drag the threshold. Watch the emails move. Lock in your best guess."
+    },
+    "endScreen": {
+      "grading": [
+        {
+          "min": 95,
+          "emoji": "🎯",
+          "label": "Optimal operating point!"
+        },
+        {
+          "min": 80,
+          "emoji": "👍",
+          "label": "Solid tradeoff"
+        },
+        {
+          "min": 60,
+          "emoji": "🤔",
+          "label": "One side is suffering"
+        },
+        {
+          "min": 0,
+          "emoji": "🌱",
+          "label": "Try the other direction"
+        }
+      ]
+    },
+    "theme": {
+      "particleEffect": "sparks"
+    }
+  }
+}

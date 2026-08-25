@@ -56,23 +56,9 @@ const [XMIN, XMAX] = L.domain || [-6, 6];
 const SIGN = GAME_DATA.direction === "max" ? -1 : 1;   // ascent = descend the negated curve
 const TOL  = L.tolerance || 1e-3;
 
-// f and its EXACT derivative, both read off the declared terms — no eval, no finite differences.
-const TERM = {
-  const: (t, x) => t.c,                                    lin:  (t, x) => t.m * x,
-  quad:  (t, x) => t.a * x * x,                            cubic:(t, x) => t.a * x * x * x,
-  sin:   (t, x) => t.amp * Math.sin(t.freq * x + (t.phase || 0)),
-  cos:   (t, x) => t.amp * Math.cos(t.freq * x + (t.phase || 0)),
-};
-const DTERM = {
-  const: () => 0,                                          lin:  t => t.m,
-  quad:  (t, x) => 2 * t.a * x,                            cubic:(t, x) => 3 * t.a * x * x,
-  sin:   (t, x) => t.amp * t.freq * Math.cos(t.freq * x + (t.phase || 0)),
-  cos:   (t, x) => -t.amp * t.freq * Math.sin(t.freq * x + (t.phase || 0)),
-};
-const bad = L.terms.filter(t => !(t.type in TERM)).map(t => t.type);
-if (bad.length) throw new Error("unknown landscape term type(s): " + bad.join(", "));
-const f  = x => L.terms.reduce((s, t) => s + TERM[t.type](t, x), 0);
-const df = x => L.terms.reduce((s, t) => s + DTERM[t.type](t, x), 0);
+// f and its EXACT derivative, both read off the declared terms — no eval, no
+// finite differences. The evaluator lives in base.js so balance_tradeoff shares it.
+const { f, df } = TG.curve(L.terms);
 
 const cv = $("cv"), ctx = cv.getContext("2d");
 const TH = TG.cfg.theme;

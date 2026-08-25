@@ -16,6 +16,8 @@ REQUIRED = {
     "route_and_sort":     ["title", "intro", "destinations", "insight"],
     "parameter_control":  ["title", "intro", "landscape", "insight"],
     "predict_and_verify": ["title", "intro", "items", "insight"],
+    "balance_tradeoff":   ["title", "intro", "insight"],
+    "explore_grid":       ["title", "intro", "grid", "landscape", "insights"],
 }
 
 

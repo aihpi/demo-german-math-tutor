@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Teaching Game</title>
+<style>
+/*__BASE_CSS__*/
+body { padding: 18px 24px 30px; display: block; }
+#main { display: grid; grid-template-columns: auto 1fr; gap: 26px; margin-top: 14px; align-items: start; }
+#gridWrap { position: relative; }
+#grid { display: grid; gap: 3px; }
+.tile { width: 42px; height: 42px; border-radius: 5px; background: var(--raised); cursor: pointer;
+        border: 1px solid var(--line);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 700; color: #10130f; transition: transform .12s, background .2s; }
+.tile.fog:hover { transform: scale(1.09); background: var(--line-hi); }
+.tile.done { cursor: default; border-color: transparent; }
+.tile.best { box-shadow: 0 0 0 3px var(--accent); }
+#path { position: absolute; inset: 0; pointer-events: none; }
+.axis-x { text-align: center; font-size: 12px; color: var(--dim); margin-top: 8px; }
+.axis-y { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 12px; color: var(--dim);
+          display: flex; align-items: center; justify-content: center; }
+#row { display: flex; gap: 10px; }
+.big { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.legend { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); margin-top: 12px; }
+.ramp { flex: 1; height: 10px; border-radius: 5px;
+        background: linear-gradient(90deg, #b3261e, #d19a1d, #50C878); }
+.touch .tile { width: 46px; height: 46px; }
+</style>
+</head>
+<body>
+<div class="top" style="border:0;padding:0 0 8px">
+  <h1 id="title"></h1>
+  <div class="stat"><b id="sBudget">–</b><span id="lBudget"></span></div>
+  <div class="stat"><b id="sBest">–</b><span>best found</span></div>
+  <div class="stat"><b id="sAt">–</b><span>at</span></div>
+</div>
+<p class="sub" id="sub"></p>
+
+<div id="main">
+  <div id="row">
+    <div class="axis-y" id="axisY"></div>
+    <div>
+      <div id="gridWrap"><div id="grid"></div><svg id="path"></svg></div>
+      <div class="axis-x" id="axisX"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2 id="valueLabel"></h2>
+    <p class="big accent" id="bestBig">–</p>
+    <p class="sub" id="strategyNote" style="font-size:13px"></p>
+    <div class="legend"><span>low</span><span class="ramp"></span><span>high</span></div>
+    <div id="done" class="hide" style="margin-top:16px">
+      <p class="insight" id="insightBody" style="font-size:14px"></p>
+      <button class="primary" id="again" style="margin-top:14px">Play again</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="overlay"></div>
+
+<script>
+const GAME_DATA = /*__GAME_DATA__*/;
+/*__BASE_JS__*/
+
+const $ = id => document.getElementById(id);
+const G  = GAME_DATA.grid, L = GAME_DATA.landscape;
+const AX = GAME_DATA.axes || { x: { label: "x" }, y: { label: "y" } };
+const CFGD = Object.assign({ endRevealAll: true, showPlayerPath: true }, GAME_DATA.config);
+const BUDGET = G.totalBudget ?? 25;
+const PEAKS = L.peaks || [];
+const BASE = L.baseValue ?? 60;
+
+// Deterministic value-noise: the same tile always reads the same, so the end-of-game
+// heatmap agrees with what the player actually saw. (Math.random would not.)
+const hash = (x, y) => { let h = (x * 374761393 + y * 668265263) ^ 0x5bf03635;
+  h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
+const value = (x, y) => {
+  let v = BASE;
+  for (const p of PEAKS) {
+    const r = p.radius || 1.5, d2 = (x - p.x) ** 2 + (y - p.y) ** 2;
+    v = Math.max(v, BASE + (p.value - BASE) * Math.exp(-d2 / (2 * r * r)));
+  }
+  return v + (hash(x, y) - 0.5) * 2 * (L.noiseAmount ?? 0);
+};
+
+const all = [];
+for (let y = 0; y < G.height; y++) for (let x = 0; x < G.width; x++) all.push(value(x, y));
+const VMIN = Math.min(...all), VMAX = Math.max(...all);
+const DP = (VMAX - VMIN) < 25 ? 1 : 0;
+const global = PEAKS.reduce((m, p) => p.value > m.value ? p : m, PEAKS[0] || { value: BASE, x: 0, y: 0 });
+
+const colour = v => {
+  const t = (v - VMIN) / ((VMAX - VMIN) || 1);
+  const stops = [[179, 38, 30], [209, 154, 29], [80, 200, 120]];
+  const i = t < 0.5 ? 0 : 1, k = t < 0.5 ? t * 2 : (t - 0.5) * 2;
+  const c = stops[i].map((a, j) => Math.round(a + (stops[i + 1][j] - a) * k));
+  return `rgb(${c.join(",")})`;
+};
+
+let left = 0, revealed = [], bestV = -Infinity, bestXY = null, over = false;
+
+function build() {
+  $("grid").style.gridTemplateColumns = `repeat(${G.width}, 42px)`;
+  $("grid").innerHTML = "";
+  for (let y = 0; y < G.height; y++) for (let x = 0; x < G.width; x++) {
+    const d = document.createElement("div");
+    d.className = "tile fog"; d.dataset.x = x; d.dataset.y = y;
+    d.onclick = () => reveal(x, y, d);
+    $("grid").appendChild(d);
+  }
+}
+const tileAt = (x, y) => $("grid").children[y * G.width + x];
+
+function reveal(x, y, el) {
+  if (over || left <= 0 || !el.classList.contains("fog")) return;
+  const v = value(x, y);
+  el.classList.remove("fog"); el.classList.add("done");
+  el.style.background = colour(v);
+  el.textContent = v.toFixed(DP);
+  left--; revealed.push({ x, y, v });
+  TG.sfx(v > bestV ? "correct" : "wrong");
+  if (v > bestV) {
+    if (bestXY) tileAt(bestXY.x, bestXY.y).classList.remove("best");
+    bestV = v; bestXY = { x, y }; el.classList.add("best");
+    const r = el.getBoundingClientRect(); TG.burst(r.left + 21, r.top + 21, TG.cfg.theme.success);
+  }
+  render();
+  if (left === 0) finish();
+}
+
+function drawPath() {
+  if (!CFGD.showPlayerPath || revealed.length < 2) return;
+  const svg = $("path"), box = $("grid").getBoundingClientRect();
+  svg.setAttribute("width", box.width); svg.setAttribute("height", box.height);
+  const pts = revealed.map(r => {
+    const b = tileAt(r.x, r.y).getBoundingClientRect();
+    return `${b.left - box.left + b.width / 2},${b.top - box.top + b.height / 2}`;
+  }).join(" ");
+  svg.innerHTML = `<polyline points="${pts}" fill="none" stroke="${TG.cfg.theme.accent}"
+                   stroke-width="2" stroke-opacity=".55" stroke-linejoin="round"/>`;
+}
+
+function render() {
+  $("sBudget").textContent = left;
+  $("sBest").textContent = bestV > -Infinity ? bestV.toFixed(1) : "–";
+  $("bestBig").textContent = bestV > -Infinity ? bestV.toFixed(1) : "–";
+  $("sAt").textContent = bestXY ? `${bestXY.x}, ${bestXY.y}` : "–";
+  $("strategyNote").textContent = revealed.length >= 4 ? describe().note : "";
+  drawPath();
+}
+
+// ponytail: clustering heuristic, not a real strategy classifier. It only has to
+// tell "kept probing near the best" apart from "spread out", which it does.
+function describe() {
+  const near = revealed.slice(3).filter((r, i) => {
+    const prior = revealed.slice(0, i + 3).reduce((m, q) => q.v > m.v ? q : m, revealed[0]);
+    return Math.hypot(r.x - prior.x, r.y - prior.y) <= 2;
+  }).length;
+  const pct = Math.round(near / Math.max(1, revealed.length - 3) * 100);
+  const key = pct > 55 ? "bayesianLike" : pct < 20 ? "randomSearch" : "mixed";
+  const S = GAME_DATA.strategies || {};
+  return { key, pct, note: S[key] || "", label: S[key] || key };
+}
+
+function finish() {
+  over = true;
+  const d = describe();
+  // Did the best tile land in the global peak's basin? Compare POSITION, not value:
+  // noise can push a local peak's reading above a sample near the global one.
+  const foundGlobal = bestXY &&
+    Math.hypot(bestXY.x - global.x, bestXY.y - global.y) <= (global.radius || 1.5);
+  const which = foundGlobal ? (d.key === "randomSearch" ? "scattered" : "foundGlobal") : "foundLocal";
+  const I = GAME_DATA.insights[which] || GAME_DATA.insights.foundLocal;
+  if (CFGD.endRevealAll) {
+    for (let y = 0; y < G.height; y++) for (let x = 0; x < G.width; x++) {
+      const el = tileAt(x, y);
+      if (!el.classList.contains("fog")) continue;
+      el.classList.remove("fog"); el.style.background = colour(value(x, y));
+      el.style.opacity = .45; el.textContent = value(x, y).toFixed(DP);
+    }
+  }
+  drawPath();
+  const vals = { bestX: bestXY.x, bestY: bestXY.y, bestValue: bestV.toFixed(1),
+                 globalValue: global.value.toFixed(1), reveals: revealed.length, budget: BUDGET,
+                 strategy: d.label, exploitPercent: d.pct,
+                 uniqueRegions: new Set(revealed.map(r => `${r.x >> 2},${r.y >> 2}`)).size,
+                 optimalReveals: Math.max(6, Math.round(BUDGET * 0.4)) };
+  $("insightBody").innerHTML = `<b>${I.title}</b> — ` + TG.fill(I.body, vals);
+  $("done").classList.remove("hide");
+  TG.end($("overlay"), { pct: Math.round(bestV / global.value * 100),
+    headline: I.title, insight: I.body, vals, onReplay: start });
+}
+
+function start() {
+  $("overlay").classList.add("hide");
+  left = BUDGET; revealed = []; bestV = -Infinity; bestXY = null; over = false;
+  $("done").classList.add("hide"); $("path").innerHTML = "";
+  build(); render();
+}
+
+$("title").textContent = GAME_DATA.title;
+$("sub").innerHTML = GAME_DATA.subtitle || "";
+$("lBudget").textContent = G.budgetLabel || "reveals left";
+$("valueLabel").textContent = L.valueLabel || "value";
+$("axisX").textContent = `${AX.x.label}${AX.x.range ? "  ·  " + AX.x.range : ""} →`;
+$("axisY").textContent = `${AX.y.label}${AX.y.range ? "  ·  " + AX.y.range : ""} →`;
+$("again").onclick = start;
+build();
+TG.title($("overlay"), GAME_DATA.intro.headline, GAME_DATA.intro.body, start);
+</script></body></html>

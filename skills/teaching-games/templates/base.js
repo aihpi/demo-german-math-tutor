@@ -169,7 +169,35 @@ const TG = (() => {
     if (b) b.onclick = onReplay;
   };
 
+  /* ---- declarative curves ---------------------------------------------
+     Shared by parameter_control and balance_tradeoff. Terms are data, so an
+     author never writes a formula and the derivative stays exact. */
+  const TERM = {
+    const: t => t.c,                                   lin:  (t, x) => t.m * x,
+    quad:  (t, x) => t.a * x * x,                      cubic:(t, x) => t.a * x * x * x,
+    sin:   (t, x) => t.amp * Math.sin(t.freq * x + (t.phase || 0)),
+    cos:   (t, x) => t.amp * Math.cos(t.freq * x + (t.phase || 0)),
+    exp:   (t, x) => t.amp * Math.exp(t.rate * x),
+    inv:   (t, x) => t.a / (x + (t.shift ?? 1)),
+  };
+  const DTERM = {
+    const: () => 0,                                    lin:  t => t.m,
+    quad:  (t, x) => 2 * t.a * x,                      cubic:(t, x) => 3 * t.a * x * x,
+    sin:   (t, x) => t.amp * t.freq * Math.cos(t.freq * x + (t.phase || 0)),
+    cos:   (t, x) => -t.amp * t.freq * Math.sin(t.freq * x + (t.phase || 0)),
+    exp:   (t, x) => t.amp * t.rate * Math.exp(t.rate * x),
+    inv:   (t, x) => -t.a / Math.pow(x + (t.shift ?? 1), 2),
+  };
+  const curve = terms => {
+    const bad = (terms || []).filter(t => !(t.type in TERM)).map(t => t.type);
+    if (bad.length) throw new Error("unknown curve term type(s): " + bad.join(", "));
+    return {
+      f:  x => terms.reduce((s, t) => s + TERM[t.type](t, x), 0),
+      df: x => terms.reduce((s, t) => s + DTERM[t.type](t, x), 0),
+    };
+  };
+
   applyTheme();
-  return { cfg: C, sfx, burst, dif, mp, title, end, grade, fill,
+  return { cfg: C, sfx, burst, dif, mp, title, end, grade, fill, curve,
            ms: base => base * ({ slow: 1.6, normal: 1, fast: .6, instant: .01 }[C.animations.speed] ?? 1) };
 })();

@@ -1,0 +1,21 @@
+{
+  "title": "BIAS vs VARIANCE",
+  "subtitle": "Same engine, no classifier — two declared curves that fight each other.",
+  "intro": {
+    "headline": "Pick the <span class=\"accent\">model complexity</span>",
+    "body": "A simple model underfits: high bias, low variance. A complex one memorises the training set: low bias, high variance. Total error is the sum, and it is U-shaped. Find the bottom."
+  },
+  "param": { "label": "Model complexity", "min": 1, "max": 12, "default": 2, "step": 0.1 },
+  "objective": "min-sum",
+  "curves": {
+    "a": { "label": "Bias²",    "terms": [ { "type": "exp", "amp": 9, "rate": -0.45 }, { "type": "const", "c": 0.3 } ] },
+    "b": { "label": "Variance", "terms": [ { "type": "quad", "a": 0.075 }, { "type": "const", "c": 0.2 } ] }
+  },
+  "insight": "You chose complexity {threshold}, giving bias² of {metricA} and variance of {metricB}. The minimum total error sits at {best}. Every model sits somewhere on this curve: too simple and it cannot represent the pattern, too complex and it fits the noise in your particular training sample. Regularization, dropout and early stopping are all ways of sliding left along this axis without throwing away capacity.",
+  "customization": {
+    "titleScreen": { "emoji": "📈", "flavor": "More parameters, more problems.",
+                     "instructions": "Slide the complexity. Watch both error sources move in opposite directions." },
+    "theme": { "accent": "#FF4444", "particleEffect": "none" },
+    "animations": { "speed": "fast" }
+  }
+}

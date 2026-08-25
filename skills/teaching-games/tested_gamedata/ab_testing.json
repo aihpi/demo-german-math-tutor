@@ -1,0 +1,46 @@
+{
+  "title": "A/B TEST BUDGET",
+  "subtitle": "Same engine, different stakes — every test costs real traffic.",
+  "intro": {
+    "headline": "You have traffic for <span class=\"accent\">18 variants</span>",
+    "body": "Each tile is a landing-page variant: headline style across, layout across the other axis. Testing one costs a slice of live traffic you cannot get back. Find the best converting variant before you run out."
+  },
+  "grid": { "width": 8, "height": 8, "totalBudget": 18, "budgetLabel": "traffic slices left" },
+  "axes": {
+    "x": { "label": "Headline style", "range": "plain → urgent" },
+    "y": { "label": "Layout", "range": "dense → airy" }
+  },
+  "landscape": {
+    "peaks": [
+      { "x": 5, "y": 5, "value": 11.4, "radius": 1.6, "label": "Best variant" },
+      { "x": 1, "y": 2, "value": 9.1,  "radius": 1.2, "label": "Decent variant" }
+    ],
+    "baseValue": 4.0,
+    "noiseAmount": 0.8,
+    "valueLabel": "Conversion rate (%)"
+  },
+  "strategies": {
+    "bayesianLike": "Iterating on your best variant — that is exploitation.",
+    "randomSearch": "Sampling widely across the design space.",
+    "mixed": "Balancing new ideas against refining a winner."
+  },
+  "insights": {
+    "foundGlobal": {
+      "title": "Best variant found",
+      "body": "You landed on {bestValue}% conversion at ({bestX}, {bestY}) in {reveals} tests. Multi-armed bandit algorithms formalise what you just did: shift traffic toward variants that are winning, but keep a trickle going to the others in case you are wrong."
+    },
+    "foundLocal": {
+      "title": "Left money on the table",
+      "body": "You shipped {bestValue}% but {globalValue}% existed. With {exploitPercent}% of tests clustered near an early winner, you optimised a hill you happened to land on. This is why teams that only ever A/B-test small tweaks plateau — local search cannot find a design it never tries."
+    },
+    "scattered": {
+      "title": "Thorough, and expensive",
+      "body": "You covered {uniqueRegions} regions across {reveals} tests to find {bestValue}%. Correct, but every slice of traffic sent to a bad variant is revenue spent on information. A bandit would have cut the losers early and reached the same answer in about {optimalReveals}."
+    }
+  },
+  "customization": {
+    "titleScreen": { "emoji": "🧪", "flavor": "Every test costs real users.",
+                     "instructions": "Click a variant to send it traffic. You have 18 slices." },
+    "theme": { "accent": "#4A9EFF", "particleEffect": "ripple" }
+  }
+}

@@ -23,6 +23,10 @@ CASES = {
     "gradient_ascent_reward":   "parameter_control",
     "attention_weights":        "predict_and_verify",
     "next_word_probability":    "predict_and_verify",
+    "precision_recall":         "balance_tradeoff",
+    "bias_variance":            "balance_tradeoff",
+    "hyperparameter_hunt":      "explore_grid",
+    "ab_testing":               "explore_grid",
 }
 
 
@@ -42,9 +46,16 @@ def build_all(tmp: pathlib.Path) -> None:
 
         # every {placeholder} in insight text must be one the engine actually fills
         known = {"score", "accuracy", "avgActivated", "savedPct", "bestStreak", "routed", "total",
-                 "steps", "rate", "x", "value", "query", "top", "topP"}
+                 "steps", "rate", "x", "value", "query", "top", "topP",
+                 "threshold", "best", "metricA", "metricB", "nameA", "nameB",
+                 "missed", "falseAlarms", "caught",
+                 "bestX", "bestY", "bestValue", "globalValue", "reveals", "budget",
+                 "strategy", "exploitPercent", "uniqueRegions", "optimalReveals"}
         import re
-        unknown = set(re.findall(r"\{(\w+)\}", data["insight"])) - known
+        # explore_grid keys its insight text by outcome; everything else has one string
+        texts = ([i["body"] for i in data["insights"].values()] if "insights" in data
+                 else [data["insight"]])
+        unknown = set(re.findall(r"\{(\w+)\}", " ".join(texts))) - known
         assert not unknown, f"{stem}: insight uses unknown placeholder(s) {unknown}"
         print(f"  ok  {stem:24} -> {template}")
 
