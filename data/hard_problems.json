@@ -1,0 +1,96 @@
+[
+  {
+    "id": "math-geometry-test-0029",
+    "label": "MATH · Geometry · Level 2 · #29",
+    "source": "hendrycks/MATH",
+    "question": "Two sides of a triangle are each $8$ units long. If the third side has a whole number length, what is the greatest possible perimeter, in units, for the triangle?",
+    "question_de": "Zwei Seiten eines Dreiecks sind jeweils 8 Einheiten lang. Wenn die dritte Seite eine ganzzahlige Länge hat, wie groß ist der größtmögliche Umfang des Dreiecks in Einheiten?",
+    "steps": [
+      "Triangle Inequality: 8 + 8 = 16 must be greater than the third side.",
+      "The greatest whole number strictly less than 16 is 15.",
+      "Perimeter = 8 + 8 + 15 = 31."
+    ],
+    "answer": "31",
+    "topic": "geometry",
+    "story": false,
+    "trap": "The third side must be STRICTLY less than 16, so it is 15 and the perimeter is 31 — not 16 and 32. An off-by-one on a strict inequality. The second distractor under-shoots rather than over-shoots, so ruling out 16 does not hand over the answer — the student still has to want the LARGEST valid value.",
+    "nouns": {
+      "en": {},
+      "de": {}
+    },
+    "route": {
+      "en": [
+        {
+          "choices": [
+            "Apply the Triangle Inequality: the two 8-unit sides together must exceed the third side.",
+            "Apply the Pythagorean theorem to find the third side.",
+            "The third side can be any whole number, so take it as large as we like."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Take 16, since 8 + 8 = 16.",
+            "Take the greatest whole number strictly below 16, which is 15.",
+            "Take 14, to stay safely under the limit."
+          ],
+          "correct": 2,
+          "figures": [
+            "    ●───────────●───────────●\n         8           8\n    └───────  16  ───────┘\n\n  → no triangle — the two sides lie flat",
+            "        ●\n       ╱ ╲\n    8 ╱   ╲ 8\n     ╱     ╲\n    ●───────●\n        15\n\n  → the largest triangle that still closes",
+            "        ●\n       ╱ ╲\n    8 ╱   ╲ 8\n     ╱     ╲\n    ●───────●\n        14\n\n  → a triangle, but not the largest one"
+          ],
+          "figures_svg": [
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 372 150\" width=\"372\" height=\"150\"><style>.s{stroke-dasharray:304;stroke-dashoffset:304;animation:d 1100ms ease-out forwards}.b{stroke-dasharray:304;stroke-dashoffset:304;animation:d 1100ms ease-out 1100ms forwards}.f{opacity:0;animation:f 400ms ease-out 2200ms forwards}@keyframes d{to{stroke-dashoffset:0}}@keyframes f{to{opacity:1}}</style><g fill=\"none\" stroke=\"#ef4444\" stroke-width=\"3\" stroke-linecap=\"round\"><path class=\"s\" d=\"M26.0 104.0 L178.0 104.0 L330.0 104.0\"/><path class=\"b\" d=\"M26.0 104.0 L330.0 104.0\"/></g><g class=\"f\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"15\" fill=\"#64748b\"><text x=\"86.0\" y=\"98.0\">8</text><text x=\"262.0\" y=\"98.0\">8</text><text x=\"170.0\" y=\"126.0\">16</text></g><text class=\"f\" x=\"26\" y=\"142\" fill=\"#ef4444\" font-size=\"14\" font-weight=\"600\" font-family=\"ui-sans-serif,system-ui,sans-serif\">16 — no triangle, the sides lie flat</text></svg>",
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 372 150\" width=\"372\" height=\"150\"><style>.s{stroke-dasharray:304;stroke-dashoffset:304;animation:d 1100ms ease-out forwards}.b{stroke-dasharray:285;stroke-dashoffset:285;animation:d 1100ms ease-out 1100ms forwards}.f{opacity:0;animation:f 400ms ease-out 2200ms forwards}@keyframes d{to{stroke-dashoffset:0}}@keyframes f{to{opacity:1}}</style><g fill=\"none\" stroke=\"#22c55e\" stroke-width=\"3\" stroke-linecap=\"round\"><path class=\"s\" d=\"M26.0 104.0 L168.5 51.1 L311.0 104.0\"/><path class=\"b\" d=\"M26.0 104.0 L311.0 104.0\"/></g><g class=\"f\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"15\" fill=\"#64748b\"><text x=\"81.2\" y=\"71.6\">8</text><text x=\"247.8\" y=\"71.6\">8</text><text x=\"160.5\" y=\"126.0\">15</text></g><text class=\"f\" x=\"26\" y=\"142\" fill=\"#22c55e\" font-size=\"14\" font-weight=\"600\" font-family=\"ui-sans-serif,system-ui,sans-serif\">15 — the largest triangle that still closes</text></svg>",
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 372 150\" width=\"372\" height=\"150\"><style>.s{stroke-dasharray:304;stroke-dashoffset:304;animation:d 1100ms ease-out forwards}.b{stroke-dasharray:266;stroke-dashoffset:266;animation:d 1100ms ease-out 1100ms forwards}.f{opacity:0;animation:f 400ms ease-out 2200ms forwards}@keyframes d{to{stroke-dashoffset:0}}@keyframes f{to{opacity:1}}</style><g fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"3\" stroke-linecap=\"round\"><path class=\"s\" d=\"M26.0 104.0 L159.0 30.4 L292.0 104.0\"/><path class=\"b\" d=\"M26.0 104.0 L292.0 104.0\"/></g><g class=\"f\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"15\" fill=\"#64748b\"><text x=\"76.5\" y=\"61.2\">8</text><text x=\"233.5\" y=\"61.2\">8</text><text x=\"151.0\" y=\"126.0\">14</text></g><text class=\"f\" x=\"26\" y=\"142\" fill=\"#94a3b8\" font-size=\"14\" font-weight=\"600\" font-family=\"ui-sans-serif,system-ui,sans-serif\">14 — a triangle, but not the largest</text></svg>"
+          ]
+        },
+        {
+          "choices": [
+            "Add all three side lengths: 8 + 8 + 15.",
+            "Give the third side, 15, as the answer.",
+            "Add the two equal sides: 8 + 8."
+          ],
+          "correct": 1
+        }
+      ],
+      "de": [
+        {
+          "choices": [
+            "Die Dreiecksungleichung anwenden: die beiden 8er-Seiten zusammen müssen länger sein als die dritte Seite.",
+            "Den Satz des Pythagoras anwenden, um die dritte Seite zu berechnen.",
+            "Die dritte Seite darf beliebig lang sein, solange sie ganzzahlig ist."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "16 nehmen, denn 8 + 8 = 16.",
+            "Die größte ganze Zahl nehmen, die echt kleiner als 16 ist, also 15.",
+            "14 nehmen, um sicher unter der Grenze zu bleiben."
+          ],
+          "correct": 2,
+          "figures": [
+            "    ●───────────●───────────●\n         8           8\n    └───────  16  ───────┘\n\n  → kein Dreieck — die Seiten liegen flach",
+            "        ●\n       ╱ ╲\n    8 ╱   ╲ 8\n     ╱     ╲\n    ●───────●\n        15\n\n  → das größte Dreieck, das sich noch schließt",
+            "        ●\n       ╱ ╲\n    8 ╱   ╲ 8\n     ╱     ╲\n    ●───────●\n        14\n\n  → ein Dreieck, aber nicht das größte"
+          ],
+          "figures_svg": [
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 372 150\" width=\"372\" height=\"150\"><style>.s{stroke-dasharray:304;stroke-dashoffset:304;animation:d 1100ms ease-out forwards}.b{stroke-dasharray:304;stroke-dashoffset:304;animation:d 1100ms ease-out 1100ms forwards}.f{opacity:0;animation:f 400ms ease-out 2200ms forwards}@keyframes d{to{stroke-dashoffset:0}}@keyframes f{to{opacity:1}}</style><g fill=\"none\" stroke=\"#ef4444\" stroke-width=\"3\" stroke-linecap=\"round\"><path class=\"s\" d=\"M26.0 104.0 L178.0 104.0 L330.0 104.0\"/><path class=\"b\" d=\"M26.0 104.0 L330.0 104.0\"/></g><g class=\"f\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"15\" fill=\"#64748b\"><text x=\"86.0\" y=\"98.0\">8</text><text x=\"262.0\" y=\"98.0\">8</text><text x=\"170.0\" y=\"126.0\">16</text></g><text class=\"f\" x=\"26\" y=\"142\" fill=\"#ef4444\" font-size=\"14\" font-weight=\"600\" font-family=\"ui-sans-serif,system-ui,sans-serif\">16 — kein Dreieck, die Seiten liegen flach</text></svg>",
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 372 150\" width=\"372\" height=\"150\"><style>.s{stroke-dasharray:304;stroke-dashoffset:304;animation:d 1100ms ease-out forwards}.b{stroke-dasharray:285;stroke-dashoffset:285;animation:d 1100ms ease-out 1100ms forwards}.f{opacity:0;animation:f 400ms ease-out 2200ms forwards}@keyframes d{to{stroke-dashoffset:0}}@keyframes f{to{opacity:1}}</style><g fill=\"none\" stroke=\"#22c55e\" stroke-width=\"3\" stroke-linecap=\"round\"><path class=\"s\" d=\"M26.0 104.0 L168.5 51.1 L311.0 104.0\"/><path class=\"b\" d=\"M26.0 104.0 L311.0 104.0\"/></g><g class=\"f\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"15\" fill=\"#64748b\"><text x=\"81.2\" y=\"71.6\">8</text><text x=\"247.8\" y=\"71.6\">8</text><text x=\"160.5\" y=\"126.0\">15</text></g><text class=\"f\" x=\"26\" y=\"142\" fill=\"#22c55e\" font-size=\"14\" font-weight=\"600\" font-family=\"ui-sans-serif,system-ui,sans-serif\">15 — das größte Dreieck, das sich noch schließt</text></svg>",
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 372 150\" width=\"372\" height=\"150\"><style>.s{stroke-dasharray:304;stroke-dashoffset:304;animation:d 1100ms ease-out forwards}.b{stroke-dasharray:266;stroke-dashoffset:266;animation:d 1100ms ease-out 1100ms forwards}.f{opacity:0;animation:f 400ms ease-out 2200ms forwards}@keyframes d{to{stroke-dashoffset:0}}@keyframes f{to{opacity:1}}</style><g fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"3\" stroke-linecap=\"round\"><path class=\"s\" d=\"M26.0 104.0 L159.0 30.4 L292.0 104.0\"/><path class=\"b\" d=\"M26.0 104.0 L292.0 104.0\"/></g><g class=\"f\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"15\" fill=\"#64748b\"><text x=\"76.5\" y=\"61.2\">8</text><text x=\"233.5\" y=\"61.2\">8</text><text x=\"151.0\" y=\"126.0\">14</text></g><text class=\"f\" x=\"26\" y=\"142\" fill=\"#94a3b8\" font-size=\"14\" font-weight=\"600\" font-family=\"ui-sans-serif,system-ui,sans-serif\">14 — ein Dreieck, aber nicht das größte</text></svg>"
+          ]
+        },
+        {
+          "choices": [
+            "Alle drei Seitenlängen addieren: 8 + 8 + 15.",
+            "Die dritte Seite, 15, als Antwort angeben.",
+            "Die beiden gleichen Seiten addieren: 8 + 8."
+          ],
+          "correct": 1
+        }
+      ]
+    }
+  }
+]
