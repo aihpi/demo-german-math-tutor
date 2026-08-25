@@ -93,6 +93,11 @@ const METRIC = {
   accuracy:    c => safe(c.TP + c.TN, c.TP + c.TN + c.FP + c.FN),
   f1:          c => { const p = METRIC.precision(c), r = METRIC.recall(c); return safe(2 * p * r, p + r); },
 };
+// Outside ML the same quantities have different names; medicine says sensitivity.
+METRIC.sensitivity = METRIC.recall;
+METRIC.tpr = METRIC.recall;
+METRIC.ppv = METRIC.precision;
+METRIC.npv = c => safe(c.TN, c.TN + c.FN);
 const M = Object.assign({ a: "precision", b: "recall" }, GAME_DATA.metrics);
 
 const fa = CV ? TG.curve(CV.a.terms).f : null;
