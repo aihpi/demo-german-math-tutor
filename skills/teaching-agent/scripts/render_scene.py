@@ -16,6 +16,7 @@ import pathlib
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.parse
 import urllib.request
@@ -26,6 +27,11 @@ TEMPLATES, SCENE_DATA = ROOT / "manim_templates", ROOT / "scene_data"
 # manim.constants.QUALITIES — the older copy of this map in the manim-animator
 # skill omits "p", so a -qp render died on a KeyError instead of rendering.
 QUALITY = {"l": "480p15", "m": "720p30", "h": "1080p60", "p": "1440p60", "k": "2160p60"}
+
+# manim writes media/ relative to CWD, so an agent invoked from /tmp scattered its
+# renders into /tmp/media. Pin it: the marker carries an absolute path, and the
+# agent's working directory is not ours to depend on.
+MEDIA = pathlib.Path(tempfile.gettempdir()) / "teaching-agent-media"
 
 REQUIRED = {"comparison_split": ["title", "left", "right"]}
 
@@ -218,7 +224,8 @@ def main() -> int:
 
     env = {**os.environ, "SCENE_DATA_PATH": str(data_path)}
     started = time.time()
-    r = subprocess.run(["manim", f"-q{a.quality}", str(template), scene],
+    MEDIA.mkdir(exist_ok=True)
+    r = subprocess.run(["manim", f"-q{a.quality}", "--media_dir", str(MEDIA), str(template), scene],
                        capture_output=True, text=True, env=env)
     elapsed = time.time() - started
 
@@ -227,7 +234,7 @@ def main() -> int:
         print(f"\nrender failed after {elapsed:.1f}s", file=sys.stderr)
         return r.returncode
 
-    out = pathlib.Path("media/videos") / template.stem / QUALITY[a.quality] / f"{scene}.mp4"
+    out = MEDIA / "videos" / template.stem / QUALITY[a.quality] / f"{scene}.mp4"
     if not out.exists():
         print(f"manim exited 0 but {out} is missing", file=sys.stderr)
         return 1
