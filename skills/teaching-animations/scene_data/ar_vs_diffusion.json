@@ -1,0 +1,19 @@
+{
+  "title": "AR vs Diffusion Decoding",
+  "left": {
+    "label": "Autoregressive",
+    "color": "#4A9EFF",
+    "nodes": { "total": 9, "active": 9, "arrangement": "row", "rows": 1, "cols": 9,
+               "activation": "sequential" },
+    "metric": { "label": "Tokens/forward", "value": 1, "unit": "", "countUp": false, "duration": 3.0 }
+  },
+  "right": {
+    "label": "Diffusion",
+    "color": "#FF7500",
+    "nodes": { "total": 9, "active": 6, "arrangement": "row", "rows": 1, "cols": 9,
+               "activation": "simultaneous" },
+    "metric": { "label": "Tokens/forward", "value": 6, "unit": "", "countUp": false, "duration": 3.0 }
+  },
+  "comparison": { "show": true, "label": "{ratio}x throughput gain", "highlightColor": "#FF7500" },
+  "style": { "background": "#1a1a1a", "textColor": "#e0e0e0", "accent": "#FF7500" }
+}

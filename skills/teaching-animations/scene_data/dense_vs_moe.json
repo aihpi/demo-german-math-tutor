@@ -1,0 +1,22 @@
+{
+  "title": "Dense vs MoE Inference",
+  "left": {
+    "label": "Dense Model (31.6B)",
+    "color": "#FF4444",
+    "nodes": { "total": 16, "active": 16, "arrangement": "grid", "rows": 4, "cols": 4,
+               "activation": "stagger" },
+    "metric": { "label": "FLOPs", "value": 31.6, "unit": "B", "countUp": true, "duration": 3.0 }
+  },
+  "right": {
+    "label": "MoE Model (3.2B active)",
+    "color": "#50C878",
+    "nodes": { "total": 16, "active": 3, "arrangement": "grid", "rows": 4, "cols": 4,
+               "activation": "stagger" },
+    "metric": { "label": "FLOPs", "value": 3.2, "unit": "B", "countUp": true, "duration": 3.0 }
+  },
+  "comparison": { "show": true, "label": "{ratio}x less compute", "highlightColor": "#FF7500" },
+  "style": { "background": "#1a1a1a", "textColor": "#e0e0e0", "accent": "#FF7500",
+             "font": "Helvetica", "dividerColor": "#444444" },
+  "timing": { "titleDuration": 1.5, "labelsDuration": 1.0, "animationDuration": 4.0,
+              "comparisonDuration": 2.0, "endHold": 1.5 }
+}
