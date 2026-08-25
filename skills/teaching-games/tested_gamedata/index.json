@@ -1,0 +1,27 @@
+{
+  "_comment": "Cache manifest. generate_game.py --author falls back to these when live authoring fails. `match` entries are lowercase substrings tested against the concept.",
+  "entries": [
+    { "file": "moe_routing.json",            "template": "route_and_sort",
+      "match": ["moe", "mixture of experts", "expert routing", "gating network", "top-k routing"] },
+    { "file": "moe_routing_hard.json",       "template": "route_and_sort",
+      "match": ["moe hard", "moe harder", "ambiguous routing", "soft routing"] },
+    { "file": "email_triage.json",           "template": "route_and_sort",
+      "match": ["triage", "ticket routing", "support queue", "email routing"] },
+    { "file": "precision_recall.json",       "template": "balance_tradeoff",
+      "match": ["precision", "recall", "spam filter", "false positive", "f1"] },
+    { "file": "bias_variance.json",          "template": "balance_tradeoff",
+      "match": ["bias", "variance", "overfit", "underfit", "regularization", "model complexity"] },
+    { "file": "gradient_descent.json",       "template": "parameter_control",
+      "match": ["gradient descent", "learning rate", "loss landscape", "optimizer", "convergence"] },
+    { "file": "gradient_ascent_reward.json", "template": "parameter_control",
+      "match": ["gradient ascent", "policy gradient", "reward", "reinforcement learning"] },
+    { "file": "attention_weights.json",      "template": "predict_and_verify",
+      "match": ["attention", "transformer", "query key value", "self-attention"] },
+    { "file": "next_word_probability.json",  "template": "predict_and_verify",
+      "match": ["next word", "next token", "softmax", "logits", "temperature", "sampling"] },
+    { "file": "hyperparameter_hunt.json",    "template": "explore_grid",
+      "match": ["hyperparameter", "exploration", "exploitation", "bayesian optimization", "search"] },
+    { "file": "ab_testing.json",             "template": "explore_grid",
+      "match": ["a/b test", "ab test", "bandit", "multi-armed"] }
+  ]
+}

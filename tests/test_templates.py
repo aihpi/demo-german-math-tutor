@@ -31,7 +31,7 @@ CASES = {
 
 
 def build_all(tmp: pathlib.Path) -> None:
-    seen = {p.stem for p in (GD).glob("*.json")}
+    seen = {p.stem for p in GD.glob("*.json")} - {"index"}   # index.json is the manifest, not a round
     assert seen == set(CASES), f"CASES out of sync with tested_gamedata/: {seen ^ set(CASES)}"
 
     for stem, template in CASES.items():
@@ -58,6 +58,28 @@ def build_all(tmp: pathlib.Path) -> None:
         unknown = set(re.findall(r"\{(\w+)\}", " ".join(texts))) - known
         assert not unknown, f"{stem}: insight uses unknown placeholder(s) {unknown}"
         print(f"  ok  {stem:24} -> {template}")
+
+
+def cache_manifest_is_sound() -> None:
+    """The fallback cache is the last line of defence on stage — check it points
+    at real files, with the template each one was actually built for."""
+    index = json.loads((GD / "index.json").read_text())
+    listed = {}
+    for e in index["entries"]:
+        path = GD / e["file"]
+        assert path.exists(), f"index.json points at missing {e['file']}"
+        assert e["template"] == CASES[path.stem], (
+            f"index.json maps {e['file']} to {e['template']}, but it is a {CASES[path.stem]} dataset")
+        assert e["match"], f"{e['file']} has no match keywords, so it can never be reached"
+        for m in e["match"]:
+            assert m == m.lower(), f"match key {m!r} must be lowercase — lookup lowercases the concept"
+            prev = listed.get(m)
+            assert prev is None, f"match key {m!r} is claimed by both {prev} and {e['file']}"
+            listed[m] = e["file"]
+    covered = {e["file"] for e in index["entries"]}
+    missing = {f"{k}.json" for k in CASES} - covered
+    assert not missing, f"tested GAME_DATA absent from the fallback index: {missing}"
+    print(f"  ok  cache manifest: {len(covered)} rounds, {len(listed)} match keys, no collisions")
 
 
 def rejects_bad_input(tmp: pathlib.Path) -> None:
@@ -130,5 +152,6 @@ if __name__ == "__main__":
         tmp = pathlib.Path(d)
         build_all(tmp)
         rejects_bad_input(tmp)
+        cache_manifest_is_sound()
         docs_match_reality()
     print("\nall template builds passed")

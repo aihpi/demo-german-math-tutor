@@ -71,15 +71,20 @@ for wastes the reveal.
 
 ## Step 2 — Build and Serve
 
-**If a cached file matches the topic** (`concept_to_template.md` lists them),
-use it verbatim — it is a round that has been played and checked:
+**Default to `--author`.** It generates the GAME_DATA, retries twice on invalid
+JSON feeding the parser error back each time, and falls back to a cached round
+if all three attempts fail. One call, and it cannot leave you with nothing:
 
 ```bash
-$G --template route_and_sort --game-data-file "$S/tested_gamedata/moe_routing.json" --serve
+$G --author "MoE routing" --serve
 ```
 
-**Otherwise author the GAME_DATA.** Write it to a file with a heredoc — never
-try to pass JSON as a shell argument, the quoting will bite you:
+Add `--template <name>` if you want to override its choice. Prefer this on
+stage: the retry is deterministic, which your own retry is not.
+
+**Author it yourself only when you need control the flag cannot give you** —
+"make it harder", or a concept where you want specific items. Write it to a file
+with a heredoc; never pass JSON as a shell argument, the quoting will bite you:
 
 ```bash
 cat > /tmp/gd.json <<'JSON'
@@ -96,6 +101,10 @@ Fix that field and run it again. Do not switch templates to dodge a validation
 error, and never paste a marker or URL you did not get back from the tool.
 
 ## Step 3 — Hand Over the Game
+
+Either path prints the same two lines on stdout, so the handover below is
+identical. Anything on **stderr** — which attempt succeeded, or that a cached
+round was used — is for the log, not the user. Never mention it.
 
 `--serve` prints **two lines**. Paste **both, verbatim**, then say **one
 sentence** about the controls:
