@@ -23,3 +23,18 @@ agent:
 
 skills:
   template_vars: true   # required for ${HERMES_SKILL_DIR} in SKILL.md
+
+# Subagent delegation, used by the teaching-agent skill to render an animation
+# and build a game concurrently.
+delegation:
+  # 3 is already the built-in default; stated here so the demo box is explicit.
+  # Each child is a separate inference call against the same endpoint.
+  max_concurrent_children: 3
+  # Children are leaves — they run a script and return one line. Nothing in this
+  # skill needs a child that spawns its own children.
+  max_spawn_depth: 1
+
+# NOTE: children cannot be granted execute_code — delegate_tool.py blocks it
+# unconditionally, along with delegate_task, clarify, memory and send_message.
+# The teaching-agent subagents use the `terminal` tool to run render_scene.py
+# and generate_game.py, which is all they need.

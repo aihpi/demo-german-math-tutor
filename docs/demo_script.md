@@ -27,6 +27,33 @@ python3 scripts/demo_numbers.py
 Agent pitches the mechanic, offers **Let's go / Different angle / Just explain it**.
 Click **Let's go**.
 
+### Timing, and where the silence is
+
+`delegate_task` **blocks the parent until every child returns** — it buys
+concurrency, not the ability to talk over a render. So the agent teaches in
+words *first*, then delegates the animation and the game in one call, then
+presents. Measured on this box:
+
+| | |
+|---|---|
+| animation, authored + rendered at 480p15 | 16 s |
+| game, authored + served | 24 s |
+| **sequential** | **40 s** |
+| **both delegated in one call** | **23 s** — 42% less |
+
+Parallel total ≈ the slower job alone, so two concurrent inference calls to the
+same endpoint cost nothing measurable in throughput.
+
+The 20–30 s after the delegation call **is** dead air. Fill it before, not
+during: the agent should give the whole plain-language explanation ahead of the
+call, so the wait lands after the audience already understands the idea and is
+waiting to *see* it confirmed. Rehearse that sentence order.
+
+> **PRESENTER TIP:** while the batch runs, the Hermes `/agents` overlay shows a
+> live subagent tree. Leave it on screen for a beat — two agents working in
+> parallel on one desktop box is part of the point. Don't narrate it; just let
+> it be visible.
+
 **The game: 8 experts, not 3.** Math, Language, Logic, Code, Science, Creative,
 Facts, Translation. 12 tokens per round drawn from a pool of 40.
 

@@ -115,6 +115,78 @@ teachable. A concept with no game still sits next to one that has:
 Never end a prose answer flat. If you had nothing to offer, the concept was a
 poor fit and you should have said so in one sentence.
 
+## Delegation
+
+You are the TEACHER. You talk to the learner, offer choices, and present content
+as it arrives. Content creation goes to subagents via `delegate_task`, which
+keeps their tool noise out of this conversation.
+
+**`delegate_task` blocks until every child finishes.** You cannot speak between
+delegating and receiving results — the whole batch returns at once. So the order
+is: **teach first, then delegate, then present.**
+
+### One call, both jobs
+
+When a concept is WATCH+PLAY, send both in a single call so they run
+concurrently. Two tasks that take 45 s and 15 s finish in ~45 s, not 60 s:
+
+```
+delegate_task(tasks: [
+  {goal: "Render a comparison_split animation about <concept>",
+   context: "Run this with the terminal tool, exactly once:
+             python3 ${HERMES_SKILL_DIR}/scripts/render_scene.py --author \"<concept>\" --quality l
+             It prints one line starting with [Watch: — return that line verbatim
+             as your entire answer. Do not reformat it, do not add prose. If the
+             command exits non-zero, return the word FAILED and nothing else."},
+  {goal: "Generate and serve a <template> game about <concept>",
+   context: "Run this with the terminal tool, exactly once:
+             python3 ${HERMES_SKILL_DIR}/scripts/generate_game.py --author \"<concept>\" --serve
+             It prints two lines, the first starting with [Preview: — return both
+             lines verbatim as your entire answer. Do not reformat them. If the
+             command exits non-zero, return the word FAILED and nothing else."}
+])
+```
+
+Three things that will break it if you change them:
+
+- **Subagents have no `execute_code`** — it is blocked for children. They must use
+  the `terminal` tool. Telling one to write a script wastes the delegation.
+- **Ask for the printed line verbatim, not a path or a URL.** The scripts already
+  emit correctly-encoded markers. A subagent that hands you a bare path, or a
+  parent that re-encodes one, produces a marker the app silently ignores.
+- **One `delegate_task` call, not two.** Two calls run one after the other and
+  you lose the entire point.
+
+For a single-mode concept, delegate just the one task.
+
+### Teach while you can, which is before
+
+Everything you want to say in plain language goes **before** the delegation call.
+Set up the idea, give the intuition, say what they are about to see. Then
+delegate. The wait after that is genuinely silent, so make it as short as it can
+be — `--quality l` renders in ~5 s against ~15 s for 1080p, and on a laptop
+screen the difference is invisible.
+
+### Present in the fixed order
+
+The batch returns both results together, so *you* choose the order and it is
+always **WATCH then PLAY**. Show the animation, say one sentence about what it
+showed, and only then hand over the game. Never lead with the game because it
+happened to be listed first.
+
+### When a child fails
+
+A subagent that returns `FAILED`, an empty answer, or anything that is not a
+marker line has failed. **Never say so.** The retry-and-cache logic inside both
+scripts already absorbs bad JSON and a dead endpoint, so a failure here means
+something unusual — carry on teaching in words:
+
+> Let me just explain this one instead.
+
+Then give the prose explanation and offer the other mode if it worked. One
+missing artifact is a lesson delivered differently; an error message is a broken
+demo.
+
 ## Step 2a — WATCH: Render the Animation
 
 Skip to Step 2b if this concept is PLAY-only.
@@ -298,6 +370,9 @@ budget or a routing decision all map. Concepts with no interactive core at all
 
 - **Never write HTML, CSS, JavaScript or Python.** The engines are done. Your
   entire output surface is one JSON object.
+- **Delegate content creation; never run the scripts yourself** when
+  `delegate_task` is available. Say everything you have to say *before* the
+  call — it blocks until all children return.
 - **Decide the mode before the template.** Reaching for a game when the concept
   has nothing to decide, or an animation when there is no magnitude to see, is
   the most expensive mistake available — everything after it is wasted.
@@ -373,6 +448,9 @@ budget or a routing decision all map. Concepts with no interactive core at all
 ## Verification Checklist
 
 - [ ] Mode chosen from `concept_to_output.md` before anything was built
+- [ ] WATCH+PLAY went out as ONE delegate_task call with both tasks
+- [ ] The teaching happened before the delegation, not after
+- [ ] Marker lines were pasted exactly as the subagent returned them
 - [ ] WATCH came before PLAY when the concept had both
 - [ ] Template chosen from `concept_to_template.md`, not from memory
 - [ ] Format guide read before any GAME_DATA was authored

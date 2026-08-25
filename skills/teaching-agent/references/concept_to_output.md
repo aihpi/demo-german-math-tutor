@@ -61,6 +61,45 @@ is a question about people and dates — answer that first, briefly, and *then*
 offer the mechanism. Decomposition exists for concepts that do not map, not as a
 way to avoid answering what was asked.
 
+## Delegation patterns
+
+`delegate_task` blocks until every child returns, so it buys concurrency, not
+the ability to talk while they work. Teach first, delegate once, present in
+order.
+
+### Both modes — one call, two tasks
+
+Send them together. Wall time is the slower child (~45 s), not the sum (~60 s).
+
+| concept | WATCH | PLAY |
+|---|---|---|
+| dense vs MoE | `comparison_split` | `route_and_sort` |
+| autoregressive vs diffusion | `comparison_split` | — *(no game; WATCH only)* |
+
+Only two concepts genuinely have both today, because `comparison_split` is the
+only animation template. Everything else is single-mode.
+
+### PLAY only — one task
+
+precision vs recall (`balance_tradeoff`) · overfitting (`balance_tradeoff`) ·
+attention (`predict_and_verify`) · next-token probability (`predict_and_verify`) ·
+hyperparameter search (`explore_grid`) · A/B testing (`explore_grid`) ·
+gradient descent (`parameter_control`) · KV cache (`route_and_sort`)
+
+### WATCH only — one task
+
+autoregressive vs diffusion decoding · CPU vs GPU cores · quantized vs
+full-precision · batch 1 vs batch 8 · anything that is purely *this against that*
+with no decision in it.
+
+### What does not exist
+
+There is **one** animation template, `comparison_split`. Multi-animation stories
+are not buildable: a concept needing an architecture walkthrough, a denoising
+sequence or a loss-landscape flythrough has no template, so do not delegate one.
+Use the single comparison if the concept has a two-way contrast in it, and prose
+otherwise.
+
 ## Cached scenes
 
 `scene_data/index.json` lists SCENE_DATA that has been rendered and checked. Use
