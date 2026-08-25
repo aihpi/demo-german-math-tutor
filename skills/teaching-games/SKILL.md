@@ -93,18 +93,28 @@ on a missing required field, and starts the loopback server if it isn't up.
 
 **On a non-zero exit, read stderr — it names the exact field that is wrong.**
 Fix that field and run it again. Do not switch templates to dodge a validation
-error, and do not paste a URL you did not get back.
+error, and never paste a marker or URL you did not get back from the tool.
 
 ## Step 3 — Hand Over the Game
 
-Put the URL on its own line, as a link, and say **one sentence** about the
-controls:
+`--serve` prints **one line: a preview marker**. Paste it **verbatim**, on its
+own line, then say **one sentence** about the controls:
 
 ```
-[Open the game](http://127.0.0.1:8732/74d00491d26e.html)
+[Preview: 74d00491d26e.html](#preview/http%3A%2F%2F127.0.0.1%3A8732%2F74d00491d26e.html)
 
 Click the expert each token belongs to before it hits the floor.
 ```
+
+That marker is what opens the game inside the app's preview rail, where the
+user can play it without leaving the chat. **Never retype it or "tidy" it into
+a normal link** — a plain `[Open the game](http://127.0.0.1:…)` does not open
+the rail at all. The desktop renderer strips bare loopback URLs from your text
+and only recognises this exact `#preview/` form, so the user would be left with
+nothing to click. Copy the line the tool gave you, character for character.
+
+If the user says they cannot see it, `--url-only` reprints the plain URL they
+can open in a browser instead.
 
 Then stop talking. The player is playing. Do not narrate the game, do not
 explain the concept yet, and do not pre-empt the score — the insight text
@@ -187,7 +197,8 @@ budget or a routing decision all map. Concepts with no interactive core at all
 
 - **Never write HTML, CSS or JavaScript.** The engines are done. Your entire
   output surface is one JSON object.
-- **Never invent a URL.** Only ever paste one that `--serve` printed.
+- **Never invent a URL or preview marker.** Paste the line `--serve` printed,
+  unmodified. Re-encoding it by hand breaks the preview rail.
 - **Never explain the concept before they play.** Steps 1 and 3 are pitch and
   handover; the teaching happens in Step 4.
 - **Never claim a game exists for `race_algorithm` or `build_and_test`.** Every
@@ -206,25 +217,27 @@ budget or a routing decision all map. Concepts with no interactive core at all
    the game. Saying it first is the single most expensive mistake here.
 3. **Authoring GAME_DATA from memory of this file.** Read the format guide. The
    placeholder names and required fields are exact.
-4. **Using a placeholder the engine doesn't fill.** It renders as literal
+4. **Rewriting the preview marker as a normal link.** `[Open the game](http://…)`
+   opens nothing — the rail only recognises the `#preview/` form the tool emits.
+5. **Using a placeholder the engine doesn't fill.** It renders as literal
    `{braces}` on screen. Each template's list is in the format guide.
-5. **`temp` left at 1 in `predict_and_verify`.** The distribution comes out
+6. **`temp` left at 1 in `predict_and_verify`.** The distribution comes out
    nearly flat and the game teaches nothing. 6–7 for unit-ish vectors.
-6. **A single `quad` landscape in `parameter_control`.** It converges from
+7. **A single `quad` landscape in `parameter_control`.** It converges from
    everywhere, so "where you start matters" never shows. Add a `sin`.
-7. **Claiming precision/recall or exploration/exploitation has no game.** Both
+8. **Claiming precision/recall or exploration/exploitation has no game.** Both
    are built — `balance_tradeoff` and `explore_grid`, each with cached GAME_DATA.
-8. **Separable classes in `balance_tradeoff`.** If every positive scores above
+9. **Separable classes in `balance_tradeoff`.** If every positive scores above
    every negative, a perfect threshold exists and the game disproves its own
    lesson. At least one negative must outrank a positive.
-9. **One peak in `explore_grid`.** With nothing to be lured by, there is no
+10. **One peak in `explore_grid`.** With nothing to be lured by, there is no
    exploration dilemma and every playthrough "finds the optimum".
-10. **Fewer than 3 destinations in `route_and_sort`.** The compute-saving
+11. **Fewer than 3 destinations in `route_and_sort`.** The compute-saving
    arithmetic only reads as a saving with enough destinations — use 6–8 when the
    point is efficiency.
-11. **Switching templates to dodge a validation error.** Read stderr; it names
+12. **Switching templates to dodge a validation error.** Read stderr; it names
    the field.
-12. **Rebuilding by editing the template.** Difficulty lives in the data.
+13. **Rebuilding by editing the template.** Difficulty lives in the data.
 
 ## Verification Checklist
 
@@ -233,7 +246,7 @@ budget or a routing decision all map. Concepts with no interactive core at all
 - [ ] The pitch described what the player does, in ≤2 sentences
 - [ ] `clarify` offered the three options; nothing was built before they picked
 - [ ] A cached GAME_DATA was used when one matched the topic
-- [ ] The URL pasted came from `--serve`, on its own line, as a link
+- [ ] The preview marker came from `--serve`, pasted verbatim on its own line
 - [ ] No part of the concept was explained before they played
 - [ ] Follow-up `clarify` came after play, not instead of it
 - [ ] "Make it harder" changed data only, and produced a new URL

@@ -108,7 +108,9 @@ def main() -> int:
     g.add_argument("--game-data-file", help="path to a .json file")
     p.add_argument("--out", default="/tmp/game.html")
     p.add_argument("--serve", action="store_true",
-                   help="also publish on loopback http and print the URL instead of the path")
+                   help="publish on loopback http and print the preview marker to paste into chat")
+    p.add_argument("--url-only", action="store_true",
+                   help="with --serve, print the bare URL instead of the preview marker")
     a = p.parse_args()
 
     raw = pathlib.Path(a.game_data_file).read_text() if a.game_data_file else a.game_data
@@ -121,8 +123,9 @@ def main() -> int:
     try:
         out = build(a.template, data, pathlib.Path(a.out))
         if a.serve:
-            from serve_game import publish          # same server the figures use, different port
-            print(publish(out.read_text()))
+            from serve_game import publish, preview_marker   # same server as the figures, different port
+            url = publish(out.read_text())
+            print(url if a.url_only else preview_marker(url))
         else:
             print(out)
     except (ValueError, FileNotFoundError) as e:

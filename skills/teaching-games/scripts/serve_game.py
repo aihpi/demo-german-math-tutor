@@ -11,7 +11,7 @@ loopback origin is the only way anything renders inline. Same conclusion the
 math-tutor skill reached for its SVG figures; this is that mechanism with the
 port moved so the two skills never fight over it.
 """
-import argparse, hashlib, pathlib, socket, subprocess, sys, tempfile, time
+import argparse, hashlib, pathlib, socket, subprocess, sys, tempfile, time, urllib.parse
 
 PORT = 8732                                                    # math-tutor holds 8731
 DIR = pathlib.Path(tempfile.gettempdir()) / "teaching-games"
@@ -61,15 +61,31 @@ def publish(html: str) -> str:
     return f"http://127.0.0.1:{PORT}/{name}"
 
 
+def preview_marker(url: str) -> str:
+    """The markdown that opens the desktop app's preview rail.
+
+    A bare loopback URL does NOT work: the renderer strips local URLs from
+    assistant text (markdown-preprocess.ts) and extractPreviewTargets()
+    explicitly ignores them. Only this marker registers a preview target, and
+    the app resolves an http(s) target to kind:'url', which renders as a live
+    web view — so the page's JavaScript actually runs.
+    """
+    # Must match JS encodeURIComponent, which leaves -_.!~*'() unescaped.
+    encoded = urllib.parse.quote(url, safe="-_.!~*'()")
+    return f"[Preview: {url.rsplit('/', 1)[-1]}](#preview/{encoded})"
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--file", default="/tmp/game.html", help="the generated game to publish")
+    p.add_argument("--url-only", action="store_true", help="print the bare URL instead of the preview marker")
     a = p.parse_args()
     src = pathlib.Path(a.file)
     if not src.exists():
         print(f"{src} does not exist — run generate_game.py first", file=sys.stderr)
         return 2
-    print(publish(src.read_text()))
+    url = publish(src.read_text())
+    print(url if a.url_only else preview_marker(url))
     return 0
 
 

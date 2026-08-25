@@ -47,7 +47,8 @@ set in `~/.hermes/config.yaml` (it already is for the math-tutor demo — see
 ```bash
 python3 scripts/generate_game.py --template route_and_sort \
     --game-data-file tested_gamedata/moe_routing.json --serve
-# -> http://127.0.0.1:8732/74d00491d26e.html
+# -> [Preview: 74d00491d26e.html](#preview/http%3A%2F%2F127.0.0.1%3A8732%2F74d00491d26e.html)
+#    (--url-only prints the bare URL instead)
 ```
 
 Three deliberate choices there, all copied from how math-tutor serves its SVG
@@ -93,19 +94,28 @@ GAME_DATA is rejected rather than silently producing a broken page. If you add
 a template, add two GAME_DATA files for it and a line in `CASES` — one example
 never catches a leaking abstraction.
 
-## Known unknown: does the preview rail render interactive HTML?
+## Rendering inside the app
 
-Proven: the desktop app renders **images** from a loopback origin — that is what
-math-tutor's `figures.py` does today. Not proven: that the preview rail will
-open an **interactive HTML page** and run its JavaScript. Nothing in this repo
-exercises that path, and no amount of local testing settles it.
+The rail takes an `http(s)` target as `kind: 'url'`, which
+`right-rail/preview-pane.tsx` routes to a live web view — so the page's
+JavaScript runs and the game is playable in the chat window.
 
-The games have been verified end to end over `http://127.0.0.1:8732` in a real
-browser — full round played, styles applied, scoring correct — so if the rail
-does not cooperate, opening the same URL in a browser beside the app is a
-working fallback that costs nothing.
+It only opens for one specific markdown form:
 
-**This is the day-1 check in the project plan. Do it before anything else.**
+```
+[Preview: game.html](#preview/http%3A%2F%2F127.0.0.1%3A8732%2Fgame.html)
+```
+
+A plain `[Open the game](http://127.0.0.1:8732/game.html)` does **not** work.
+`lib/markdown-preprocess.ts` strips bare loopback URLs from assistant text, and
+`extractPreviewTargets()` ignores them by design — its own test asserts
+`extractPreviewTargets('Preview: http://localhost:5173/')` returns `[]`. Only
+`#preview:` / `#preview/` registers a target.
+
+`serve_game.py` emits that marker so the model never hand-encodes it; the
+percent-encoding is checked byte-for-byte against `encodeURIComponent`, and the
+result against the app's own `PREVIEW_MARKDOWN_RE`. `--url-only` prints the
+plain URL for opening in a browser instead.
 
 ## Customization
 
