@@ -41,6 +41,7 @@ canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
 
 <script>
 const GAME_DATA = /*__GAME_DATA__*/;
+/*__BASE_JS__*/
 
 const $ = id => document.getElementById(id);
 const L    = GAME_DATA.landscape;
@@ -74,6 +75,7 @@ const f  = x => L.terms.reduce((s, t) => s + TERM[t.type](t, x), 0);
 const df = x => L.terms.reduce((s, t) => s + DTERM[t.type](t, x), 0);
 
 const cv = $("cv"), ctx = cv.getContext("2d");
+const TH = TG.cfg.theme;
 let W = 0, H = 0, YMIN = 0, YMAX = 0;
 let x = null, steps = 0, trail = [], running = false, done = false;
 
@@ -102,13 +104,13 @@ function draw() {
   }
   ctx.strokeStyle = "#4a4a4a"; ctx.lineWidth = 2.5; ctx.stroke();
   ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-  ctx.fillStyle = "rgba(255,117,0,0.05)"; ctx.fill();
+  ctx.fillStyle = TH.accent + "0d"; ctx.fill();
 
   if (trail.length > 1) {
     ctx.beginPath();
     trail.forEach((p, i) => i ? ctx.lineTo(sx(p), sy(f(p))) : ctx.moveTo(sx(p), sy(f(p))));
-    ctx.strokeStyle = "rgba(255,117,0,.45)"; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.fillStyle = "rgba(255,117,0,.35)";
+    ctx.strokeStyle = TH.accent + "73"; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = TH.accent + "59";
     trail.forEach(p => { ctx.beginPath(); ctx.arc(sx(p), sy(f(p)), 2.5, 0, 7); ctx.fill(); });
   }
   if (x === null) return;
@@ -117,11 +119,11 @@ function draw() {
   ctx.beginPath();
   ctx.moveTo(sx(x - r), sy(f(x) - g * r));
   ctx.lineTo(sx(x + r), sy(f(x) + g * r));
-  ctx.strokeStyle = "#4A9EFF"; ctx.lineWidth = 1.8; ctx.setLineDash([6, 5]); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = TH.secondary; ctx.lineWidth = 1.8; ctx.setLineDash([6, 5]); ctx.stroke(); ctx.setLineDash([]);
 
   ctx.beginPath(); ctx.arc(sx(x), sy(f(x)), 10, 0, 7);
-  ctx.fillStyle = done ? "#50C878" : "#FF7500"; ctx.fill();
-  ctx.strokeStyle = "#1a1a1a"; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.fillStyle = done ? TH.success : TH.accent; ctx.fill();
+  ctx.strokeStyle = TH.background; ctx.lineWidth = 2.5; ctx.stroke();
 }
 
 const say = (t, warn) => { $("banner").textContent = t; $("banner").className = "banner" + (warn ? " warn" : ""); };
@@ -139,7 +141,10 @@ function fill(tpl, v) { return tpl.replace(/\{(\w+)\}/g, (m, k) => k in v ? v[k]
 function finish(kind) {
   done = true; stop();
   say(MSG[kind], kind !== "converged");
+  TG.sfx(kind === "converged" ? "complete" : "wrong");
   if (kind !== "converged") return;
+  const r = cv.getBoundingClientRect();
+  TG.burst(r.left + sx(x), r.top + sy(f(x)), TH.success);
   $("insightBody").innerHTML = fill(GAME_DATA.insight,
     { steps, rate: rate().toFixed(3), x: x.toFixed(3), value: f(x).toFixed(3) });
   $("insight").classList.remove("hide");
@@ -161,7 +166,7 @@ function step() {
 }
 
 function stop() { running = false; $("auto").textContent = "Auto-run"; $("auto").classList.remove("primary"); }
-function loop() { if (!running) return; step(); setTimeout(() => requestAnimationFrame(loop), 60); }
+function loop() { if (!running) return; step(); setTimeout(() => requestAnimationFrame(loop), TG.ms(60)); }
 
 function place(xv) {
   x = Math.max(XMIN, Math.min(XMAX, xv));
@@ -193,9 +198,10 @@ Object.assign($("p"), P.log
   : { min: P.min, max: P.max, step: (P.max - P.min) / 200, value: P.default });
 $("pVal").textContent = rate().toFixed(3);
 
-$("overlay").innerHTML = `<h2>${GAME_DATA.intro.headline}</h2><p class="insight">${GAME_DATA.intro.body}</p>
-  <button class="primary" id="go">Start</button>`;
-$("go").onclick = () => { $("overlay").classList.add("hide"); resize(); place(GAME_DATA.start ?? (XMIN + XMAX) / 2 + (XMAX - XMIN) * 0.25); };
+TG.title($("overlay"), GAME_DATA.intro.headline, GAME_DATA.intro.body, () => {
+  $("overlay").classList.add("hide"); resize();
+  place(GAME_DATA.start ?? (XMIN + XMAX) / 2 + (XMAX - XMIN) * 0.25);
+});
 addEventListener("resize", resize);
 resize(); stats();
 </script>

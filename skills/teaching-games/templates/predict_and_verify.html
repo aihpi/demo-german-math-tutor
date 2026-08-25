@@ -71,6 +71,7 @@ button { margin-top: 16px; }
 
 <script>
 const GAME_DATA = /*__GAME_DATA__*/;
+/*__BASE_JS__*/
 
 const $ = id => document.getElementById(id);
 const IT   = GAME_DATA.items;
@@ -178,8 +179,8 @@ function drawArcs(you, model) {
     if (dash) p.setAttribute("stroke-dasharray", "5 5");
     svg.appendChild(p);
   };
-  IT.forEach((_, j) => { if (!skip(j)) arc(j, you[j], "#FF7500", !!model); });
-  if (model) IT.forEach((_, j) => { if (!skip(j)) arc(j, model[j], "#4A9EFF", false); });
+  IT.forEach((_, j) => { if (!skip(j)) arc(j, you[j], TG.cfg.theme.accent, !!model); });
+  if (model) IT.forEach((_, j) => { if (!skip(j)) arc(j, model[j], TG.cfg.theme.secondary, false); });
 }
 
 function fill(tpl, v) { return tpl.replace(/\{(\w+)\}/g, (m, k) => k in v ? v[k] : m); }
@@ -215,6 +216,11 @@ $("go").onclick = () => {
   $("insight").innerHTML = fill(GAME_DATA.insight,
     { score, query: PAIRWISE ? IT[qi].label : "", top: IT[top].label, topP: real[top].toFixed(2) });
   $("out").classList.remove("hide");
+  TG.sfx(score >= 70 ? "correct" : "wrong");
+  const gb = $("go").getBoundingClientRect();
+  if (score >= 70) TG.burst(gb.left + gb.width / 2, gb.top, TG.cfg.theme.accent);
+  const g = TG.grade(score);
+  $("verdict").textContent = `${g.emoji} ${g.label} — ` + $("verdict").textContent;
   if (PAIRWISE) drawArcs(you, real);
 };
 

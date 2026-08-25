@@ -48,8 +48,13 @@ def build(name: str, data, out: pathlib.Path) -> pathlib.Path:
 
     html = tpl.read_text()
     css = (TEMPLATES / "base.html").read_text().split("-->", 1)[1].strip()
-    for marker, value in (("/*__BASE_CSS__*/", css), ("/*__GAME_DATA__*/", js_literal(data))):
+    js = (TEMPLATES / "base.js").read_text()
+    # GAME_DATA must land before base.js, which reads it at definition time.
+    subs = [("/*__GAME_DATA__*/", js_literal(data)), ("/*__BASE_CSS__*/", css), ("/*__BASE_JS__*/", js)]
+    for marker, value in subs:
         if marker not in html:
+            if marker == "/*__BASE_JS__*/":
+                continue                      # templates predating the customization runtime
             raise ValueError(f"{name}.html has no {marker} marker")
         html = html.replace(marker, value, 1)
 

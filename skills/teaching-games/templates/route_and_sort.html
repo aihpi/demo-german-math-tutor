@@ -36,6 +36,7 @@
 
 <script>
 const GAME_DATA = /*__GAME_DATA__*/;
+/*__BASE_JS__*/
 
 const $ = id => document.getElementById(id);
 const D    = GAME_DATA.destinations;
@@ -50,12 +51,15 @@ const norm = (raw, home) => typeof raw === "string"
 const POOL = D.flatMap((d, i) => d.items.map(r => norm(r, i)));
 
 let score = 0, streak = 0, best = 0, clicks = 0, resolved = 0, hits = 0, left = 0;
-let cur = null, y = 0, speed = SPD.start, raf = 0, locked = true;
+let cur = null, y = 0, speed = SPD.start, raf = 0, locked = true, rounds = 0;
+const baseSpeed = () => SPD.start * TG.dif.scale();
 
 $("title").textContent = GAME_DATA.title;
 $("lAvg").textContent  = NOUN.destination + "s / " + NOUN.item;
 $("lLeft").textContent = NOUN.item + "s left";
 $("dests").style.gridTemplateColumns = `repeat(${D.length}, 1fr)`;
+if (!TG.cfg.titleScreen.showScore)  $("sScore").parentElement.classList.add("hide");
+if (!TG.cfg.titleScreen.showStreak) $("sStreak").parentElement.classList.add("hide");
 D.forEach((d, i) => {
   const el = document.createElement("div");
   el.className = "dest";
@@ -87,7 +91,7 @@ function fall() {
 function route(i) {
   if (locked) return;
   clicks++;                                  // every click = one destination activated
-  if (!cur.ok.includes(i)) { flash(i, "bad"); streak = 0; render(); return; }
+  if (!cur.ok.includes(i)) { flash(i, "bad"); TG.sfx("wrong"); streak = 0; render(); return; }
   settle(true, i);
 }
 
@@ -96,13 +100,15 @@ function settle(hit, i) {
   cancelAnimationFrame(raf);
   resolved++;
   if (hit) {
-    hits++; flash(i, "ok");
+    hits++; flash(i, "ok"); TG.sfx("correct");
+    const r = boxes[i].getBoundingClientRect();
+    TG.burst(r.left + r.width / 2, r.top, D[i].color);
     score += 10 + streak * 2; streak++; best = Math.max(best, streak);
     if (streak % SPD.increaseEvery === 0) speed += SPD.increaseBy;
   } else {
     clicks++;                                // a miss still burned a routing decision
-    flash(i, "bad"); streak = 0;
-    speed = Math.max(SPD.start, speed - SPD.increaseBy);
+    flash(i, "bad"); TG.sfx("wrong"); streak = 0;
+    speed = Math.max(baseSpeed(), speed - SPD.increaseBy);
   }
   render();
   $("item").classList.add("hide");
@@ -128,23 +134,31 @@ function end() {
     avgActivated: avg.toFixed(1),
     savedPct: Math.round((1 - avg / D.length) * 100),
   };
-  show(`Round over — <span class="accent">${score}</span> points`, fill(GAME_DATA.insight, vals), "Play again");
+  rounds++;
+  TG.mp.record(score);
+  TG.dif.report(hits / Math.max(1, resolved), rounds);
+  const more = TG.mp.on && TG.mp.i < TG.mp.names.length - 1;
+  TG.end($("overlay"), {
+    pct: vals.accuracy,
+    headline: more ? `${TG.mp.current()}: ${score} points` : `Round over — ${score} points`,
+    insight: GAME_DATA.insight, vals, onReplay: hotSeatOrRestart,
+  });
 }
 
-function show(head, body, btn) {
-  $("overlay").classList.remove("hide");
-  $("overlay").innerHTML = `<h2>${head}</h2><p class="insight">${body}</p><button class="primary" id="go">${btn}</button>`;
-  $("go").onclick = start;
+function hotSeatOrRestart() {
+  if (TG.mp.on && TG.mp.next()) return start();
+  TG.mp.reset(); start();
 }
 
 function start() {
   $("overlay").classList.add("hide");
   score = streak = best = clicks = resolved = hits = 0;
-  left = ROUND; speed = SPD.start;
+  left = ROUND; speed = baseSpeed();
   render(); next();
 }
 
-show(GAME_DATA.intro.headline, GAME_DATA.intro.body, "Start round");
+TG.mp.reset();
+TG.title($("overlay"), GAME_DATA.intro.headline, GAME_DATA.intro.body, start);
 render();
 $("sLeft").textContent = ROUND;
 </script>

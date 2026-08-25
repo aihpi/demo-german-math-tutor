@@ -70,3 +70,23 @@ label { font-size: 13px; color: var(--dim); text-transform: uppercase; letter-sp
           background: rgba(80,200,120,.12); border: 1px solid var(--green); color: var(--green); }
 .banner.warn { background: rgba(255,68,68,.12); border-color: var(--red); color: var(--red); }
 .hide { display: none !important; }
+/* --- customization runtime (base.js) --------------------------------- */
+.tg-emoji { font-size: 56px; line-height: 1; }
+.tg-flavor { color: var(--accent); font-size: 15px; font-weight: 600; }
+.tg-board { border-collapse: collapse; font-size: 15px; margin: 4px 0; }
+.tg-board td { padding: 4px 12px; color: var(--dim); }
+.tg-board tr:first-child td { color: var(--accent); font-weight: 700; }
+.tg-spark, .tg-ripple { position: fixed; pointer-events: none; z-index: 50; }
+.tg-spark { width: 6px; height: 6px; border-radius: 50%; animation: tg-fly .7s ease-out forwards; }
+@keyframes tg-fly { to { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
+.tg-ripple { width: 12px; height: 12px; border-radius: 50%; border: 2px solid;
+             transform: translate(-50%, -50%); animation: tg-ring .6s ease-out forwards; }
+@keyframes tg-ring { to { width: 130px; height: 130px; opacity: 0; } }
+/* Larger hit targets when customization.layout.mobileOptimized is on. */
+.touch button { padding: 15px 28px; font-size: 16px; }
+.touch .dest, .touch .tok { min-height: 56px; }
+.anim-instant *, .anim-instant *::before { transition: none !important; animation-duration: .01s !important; }
+@media (max-width: 700px) {
+  .top { gap: 14px; padding: 12px 14px; flex-wrap: wrap; }
+  .stat b { font-size: 17px; }
+}
