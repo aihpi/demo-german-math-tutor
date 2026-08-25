@@ -46,6 +46,7 @@ def build_all(tmp: pathlib.Path) -> None:
 
         # every {placeholder} in insight text must be one the engine actually fills
         known = {"score", "accuracy", "avgActivated", "savedPct", "bestStreak", "routed", "total",
+                 "destinations", "items",
                  "steps", "rate", "x", "value", "query", "top", "topP",
                  "threshold", "best", "metricA", "metricB", "nameA", "nameB",
                  "missed", "falseAlarms", "caught",

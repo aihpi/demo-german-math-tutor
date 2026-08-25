@@ -71,8 +71,22 @@ and is drawn with a dashed blue border. Names in `also` must match a
 `destinations[].name` exactly or they are dropped. Use these for a
 "make it harder" round.
 
-Placeholders: `{score}` `{accuracy}` `{avgActivated}` `{savedPct}` `{total}`
-`{bestStreak}` `{routed}`.
+### Placeholders — check the meaning, the names are not self-explanatory
+
+| placeholder | is | example |
+|---|---|---|
+| `{score}` | points scored | `252` |
+| `{accuracy}` | percent correct, **bare number, no `%` sign** — write `{accuracy}%` | `85` |
+| `{routed}` / `{items}` | how many items the player actually handled | `12` |
+| `{total}` / `{destinations}` | how many **destinations** exist, *not* items played | `8` |
+| `{avgActivated}` | destinations clicked per item | `1.3` |
+| `{savedPct}` | percent of destinations left untouched per item | `84` |
+| `{bestStreak}` | longest run of correct routes | `9` |
+
+**`{total}` is the number of boxes on screen, not the number of items played.**
+"You sorted {total} animals" prints "You sorted 8 animals" no matter how many
+they sorted — use `{items}`. And `{accuracy}` has no percent sign of its own, so
+`with {accuracy} accuracy` prints "with 85 accuracy".
 
 ---
 
@@ -118,7 +132,14 @@ climbs, which covers gradient *ascent* / reward maximisation with the same
 engine. `param.log` gives the slider a logarithmic scale; use it whenever
 `max/min > 100`, otherwise the useful range is one pixel wide.
 
-Placeholders: `{x}` `{value}` `{steps}` `{rate}`.
+### Placeholders
+
+| placeholder | is |
+|---|---|
+| `{x}` | where the ball came to rest, on the x axis |
+| `{value}` | the curve's value there (the loss or reward) |
+| `{steps}` | how many steps it took |
+| `{rate}` | the step size the player chose |
 
 ---
 
@@ -174,7 +195,14 @@ sampling, class scores.
 The weighted-sum table only appears when every item has a `v` **and** `dims` is
 set, so shape B skips it automatically.
 
-Placeholders: `{score}` `{top}` `{topP}` `{query}` (pairwise only).
+### Placeholders
+
+| placeholder | is |
+|---|---|
+| `{score}` | 0–100, how close the guess was (bare number) |
+| `{top}` | label of the item the model weighted highest |
+| `{topP}` | that item's probability, e.g. `0.73` |
+| `{query}` | the chosen query item's label — **pairwise shape only**, empty otherwise |
 
 ---
 
@@ -224,8 +252,16 @@ the same term vocabulary as `parameter_control`, plus `exp` (`amp`, `rate`) and
 `objective` is `min-sum` (total error, U-shaped) or `max-sum`. **Make one curve
 fall and the other rise**, or there is no tradeoff to find.
 
-Placeholders: `{threshold}` `{best}` `{score}` `{metricA}` `{metricB}` `{nameA}`
-`{nameB}` `{caught}` `{missed}` `{falseAlarms}` (last three: items shape only).
+### Placeholders
+
+| placeholder | is |
+|---|---|
+| `{threshold}` | where the player left the slider |
+| `{best}` | the slider position that would have been optimal |
+| `{score}` | 0–100 against that optimum (bare number) |
+| `{metricA}` / `{metricB}` | the two metric values — **items shape: bare number, no `%`** |
+| `{nameA}` / `{nameB}` | the metric names, e.g. `precision` |
+| `{caught}` / `{missed}` / `{falseAlarms}` | true positives / false negatives / false positives — **items shape only**, all `0` in curves shape |
 
 ---
 
@@ -267,8 +303,19 @@ above a sample near the global one.
   gap makes the landscape unreadable.
 - `totalBudget` around a quarter of the tiles. All 100 reveals is not a game.
 
-Placeholders: `{bestX}` `{bestY}` `{bestValue}` `{globalValue}` `{reveals}`
-`{budget}` `{strategy}` `{exploitPercent}` `{uniqueRegions}` `{optimalReveals}`.
+### Placeholders
+
+| placeholder | is |
+|---|---|
+| `{bestX}` / `{bestY}` | grid coordinates of the best tile found |
+| `{bestValue}` | its value |
+| `{globalValue}` | the best value that existed anywhere |
+| `{reveals}` | tiles actually revealed |
+| `{budget}` | tiles they were allowed |
+| `{strategy}` | the matching sentence from your `strategies` block |
+| `{exploitPercent}` | percent of reveals made next to the running best |
+| `{uniqueRegions}` | how many separate areas were probed |
+| `{optimalReveals}` | roughly what a good search would have needed |
 
 ---
 
@@ -322,3 +369,6 @@ wrong one.
 | `balance_tradeoff` scores 100 too easily | the item classes separate cleanly — make them overlap |
 | `explore_grid` always says "found the optimum" | only one peak, so every tile is in its basin |
 | customization ignored | a typo'd key is silently dropped; check spelling against the list |
+| "You sorted 8 animals" when 20 were played | `{total}` is the destination count — use `{items}` |
+| "with 85 accuracy" | `{accuracy}` carries no `%`; write `{accuracy}%` |
+| an unknown placeholder printed as `{braces}` | it is not in that template's table above |

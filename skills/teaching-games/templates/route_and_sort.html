@@ -130,6 +130,7 @@ function end() {
   const avg = resolved ? clicks / resolved : 0;
   const vals = {
     score, bestStreak: best, routed: resolved, total: D.length,
+    destinations: D.length, items: resolved,     // clearer aliases; {total} is easy to misread
     accuracy: Math.round(hits / Math.max(1, resolved) * 100),
     avgActivated: avg.toFixed(1),
     savedPct: Math.round((1 - avg / D.length) * 100),
