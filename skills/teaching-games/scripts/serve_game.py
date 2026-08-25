@@ -62,17 +62,22 @@ def publish(html: str) -> str:
 
 
 def preview_marker(url: str) -> str:
-    """The markdown that opens the desktop app's preview rail.
+    """Two lines: the desktop preview card, then a link that always shows.
 
-    A bare loopback URL does NOT work: the renderer strips local URLs from
-    assistant text (markdown-preprocess.ts) and extractPreviewTargets()
-    explicitly ignores them. Only this marker registers a preview target, and
-    the app resolves an http(s) target to kind:'url', which renders as a live
-    web view — so the page's JavaScript actually runs.
+    Line 1 is the only form the desktop app turns into a preview: it renders a
+    card with an "Open preview" button, and an http(s) target resolves to
+    kind:'url', which is a live web view — the page's JavaScript runs.
+
+    Line 2 exists because line 1 is *removed* from the visible message by
+    stripPreviewTargets(). On any surface without the rail — the CLI, the TUI,
+    Telegram — line 1 alone leaves the user staring at nothing. A markdown link
+    survives: the local-URL stripper only eats URLs preceded by whitespace or
+    start-of-string, and here the URL sits behind a "(".
     """
     # Must match JS encodeURIComponent, which leaves -_.!~*'() unescaped.
     encoded = urllib.parse.quote(url, safe="-_.!~*'()")
-    return f"[Preview: {url.rsplit('/', 1)[-1]}](#preview/{encoded})"
+    name = url.rsplit("/", 1)[-1]
+    return f"[Preview: {name}](#preview/{encoded})\n[Open in a browser instead]({url})"
 
 
 def main() -> int:

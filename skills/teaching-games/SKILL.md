@@ -97,24 +97,29 @@ error, and never paste a marker or URL you did not get back from the tool.
 
 ## Step 3 — Hand Over the Game
 
-`--serve` prints **one line: a preview marker**. Paste it **verbatim**, on its
-own line, then say **one sentence** about the controls:
+`--serve` prints **two lines**. Paste **both, verbatim**, then say **one
+sentence** about the controls:
 
 ```
 [Preview: 74d00491d26e.html](#preview/http%3A%2F%2F127.0.0.1%3A8732%2F74d00491d26e.html)
+[Open in a browser instead](http://127.0.0.1:8732/74d00491d26e.html)
 
 Click the expert each token belongs to before it hits the floor.
 ```
 
-That marker is what opens the game inside the app's preview rail, where the
-user can play it without leaving the chat. **Never retype it or "tidy" it into
-a normal link** — a plain `[Open the game](http://127.0.0.1:…)` does not open
-the rail at all. The desktop renderer strips bare loopback URLs from your text
-and only recognises this exact `#preview/` form, so the user would be left with
-nothing to click. Copy the line the tool gave you, character for character.
+The first line becomes a card with an **Open preview** button in the desktop
+app, which plays the game inside the chat window. The second is a plain link
+for every other surface. **Paste both and change neither.**
 
-If the user says they cannot see it, `--url-only` reprints the plain URL they
-can open in a browser instead.
+Two traps, both of which leave the user with a blank message:
+
+- Retyping the first line as a normal link (`[Open the game](http://…)`) never
+  opens the rail — only the exact `#preview/` form does.
+- Dropping the second line. The app **deletes** the first line from the visible
+  message once it has read it, so on the CLI, the TUI or Telegram — anywhere
+  without a preview rail — line one alone shows the user nothing at all.
+
+Copy the two lines the tool gave you, character for character.
 
 Then stop talking. The player is playing. Do not narrate the game, do not
 explain the concept yet, and do not pre-empt the score — the insight text
@@ -217,8 +222,9 @@ budget or a routing decision all map. Concepts with no interactive core at all
    the game. Saying it first is the single most expensive mistake here.
 3. **Authoring GAME_DATA from memory of this file.** Read the format guide. The
    placeholder names and required fields are exact.
-4. **Rewriting the preview marker as a normal link.** `[Open the game](http://…)`
-   opens nothing — the rail only recognises the `#preview/` form the tool emits.
+4. **Rewriting or dropping either output line.** `[Open the game](http://…)`
+   never opens the rail, and posting only the `#preview/` line leaves a blank
+   message on any surface without one. Paste both lines exactly as printed.
 5. **Using a placeholder the engine doesn't fill.** It renders as literal
    `{braces}` on screen. Each template's list is in the format guide.
 6. **`temp` left at 1 in `predict_and_verify`.** The distribution comes out
@@ -246,7 +252,7 @@ budget or a routing decision all map. Concepts with no interactive core at all
 - [ ] The pitch described what the player does, in ≤2 sentences
 - [ ] `clarify` offered the three options; nothing was built before they picked
 - [ ] A cached GAME_DATA was used when one matched the topic
-- [ ] The preview marker came from `--serve`, pasted verbatim on its own line
+- [ ] Both lines from `--serve` were pasted verbatim, neither reworded
 - [ ] No part of the concept was explained before they played
 - [ ] Follow-up `clarify` came after play, not instead of it
 - [ ] "Make it harder" changed data only, and produced a new URL
