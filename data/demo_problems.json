@@ -1,0 +1,336 @@
+[
+  {
+    "id": "gsm8k-train-0002",
+    "question": "Betty is saving money for a new wallet which costs $100. Betty has only half of the money she needs. Her parents decided to give her $15 for that purpose, and her grandparents twice as much as her parents. How much more money does Betty need to buy the wallet?",
+    "question_de": "Betty spart auf eine neue Geldbörse, die 100 € kostet. Sie hat erst die Hälfte des Geldes zusammen. Ihre Eltern geben ihr 15 € dazu, und ihre Großeltern doppelt so viel wie ihre Eltern. Wie viel Geld fehlt Betty noch für die Geldbörse?",
+    "steps": [
+      "In the beginning, Betty has only 100 / 2 = $50.",
+      "Betty's grandparents gave her 15 * 2 = $30.",
+      "This means, Betty needs 100 - 50 - 30 - 15 = $5 more."
+    ],
+    "answer": 5.0,
+    "topic": "fractions",
+    "trap": "Students answer how much money Betty now HAS ($95) instead of how much she still NEEDS, or read 'twice as much as her parents' as twice the wallet price.",
+    "route": {
+      "en": [
+        {
+          "choices": [
+            "Halve the $100 price to find what Betty has already saved.",
+            "Add her parents' $15 to the $100 price.",
+            "Divide the $100 between the people helping her."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Double her parents' $15 to get her grandparents' gift.",
+            "Double the $50 she had already saved.",
+            "Add the $15 and the $50 together."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Subtract everything she now has from the $100 price.",
+            "Add up everything she has and give that as the answer.",
+            "Subtract her parents' $15 from the $100 price."
+          ],
+          "correct": 1
+        }
+      ],
+      "de": [
+        {
+          "choices": [
+            "Den Preis von 100 € halbieren, um Bettys Erspartes zu finden.",
+            "Die 15 € der Eltern zum Preis von 100 € addieren.",
+            "Die 100 € durch die Anzahl der Helfenden teilen."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Die 15 € der Eltern verdoppeln, um das Geschenk der Großeltern zu erhalten.",
+            "Die 50 € verdoppeln, die sie schon gespart hatte.",
+            "Die 15 € und die 50 € zusammenzählen."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Alles, was sie jetzt hat, von den 100 € abziehen.",
+            "Alles zusammenzählen, was sie hat, und das als Antwort nennen.",
+            "Die 15 € der Eltern von den 100 € abziehen."
+          ],
+          "correct": 1
+        }
+      ]
+    },
+    "nouns": {
+      "en": {},
+      "de": {}
+    }
+  },
+  {
+    "id": "gsm8k-train-0113",
+    "question": "Baez has 25 marbles. She loses 20% of them one day. Then a friend sees her and gives her double the amount that Baez has after she lost them. How many marbles does Baez end up with?",
+    "question_de": "Baez hat 25 Murmeln. Eines Tages verliert sie 20 % davon. Dann sieht eine Freundin sie und schenkt ihr doppelt so viele Murmeln, wie Baez nach dem Verlust noch hat. Wie viele Murmeln hat Baez am Ende?",
+    "steps": [
+      "She loses 5 marbles because 25 x .2 = 5",
+      "She has 20 marbles after this because 25 - 5 = 20",
+      "Her friend gives her 40 marbles because 20 x 2 = 40",
+      "Adding those marbles to the 20 she had before, she ends up with 40 marbles + 20 marbles = 60 marbles"
+    ],
+    "answer": 60.0,
+    "topic": "percentages",
+    "trap": "The friend GIVES double (adding 40 to the 20 she keeps, so 60), but students read it as 'she ends up with double' (40). Also: 20% of 25 is often taken off the wrong base.",
+    "route": {
+      "en": [
+        {
+          "choices": [
+            "Take 20% of her 25 {items} to find how many she loses.",
+            "Subtract 20 from her 25 {items}.",
+            "Take 20% of the {items} she has at the very end."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Subtract the 5 lost {items} from her original 25.",
+            "Add the 5 lost {items} to her original 25.",
+            "Double the 5 lost {items}."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Double the 20 she has left to find what her friend gives her.",
+            "Double her original 25 {items}.",
+            "Halve the 20 she has left."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Add her friend's 40 {items} to the 20 she kept.",
+            "Give the 40 from her friend as the final answer.",
+            "Subtract the 40 from what she had."
+          ],
+          "correct": 1
+        }
+      ],
+      "de": [
+        {
+          "choices": [
+            "20 % von ihren 25 {items_dat} nehmen, um den Verlust zu finden.",
+            "20 von ihren 25 {items_dat} abziehen.",
+            "20 % von den {items_dat} nehmen, die sie ganz am Ende hat."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Die 5 verlorenen {items} von den ursprünglichen 25 abziehen.",
+            "Die 5 verlorenen {items} zu den 25 addieren.",
+            "Die 5 verlorenen {items} verdoppeln."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Die verbliebenen 20 verdoppeln, um das Geschenk der Freundin zu finden.",
+            "Die ursprünglichen 25 {items} verdoppeln.",
+            "Die verbliebenen 20 halbieren."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Die 40 {items} der Freundin zu den 20 dazuzählen, die sie behalten hat.",
+            "Die 40 von der Freundin als Endergebnis nennen.",
+            "Die 40 von ihrem Bestand abziehen."
+          ],
+          "correct": 1
+        }
+      ]
+    },
+    "nouns": {
+      "en": {
+        "items": "marbles",
+        "items_dat": "marbles"
+      },
+      "de": {
+        "items": "Murmeln",
+        "items_dat": "Murmeln"
+      }
+    }
+  },
+  {
+    "id": "gsm8k-train-0019",
+    "question": "Tim rides his bike back and forth to work for each of his 5 workdays. His work is 20 miles away. He also goes for a weekend bike ride of 200 miles. If he can bike at 25 mph how much time does he spend biking a week?",
+    "question_de": "Tim fährt an jedem seiner 5 Arbeitstage mit dem Rad zur Arbeit und wieder zurück. Sein Arbeitsplatz ist 20 Kilometer entfernt. Am Wochenende macht er außerdem eine Radtour über 200 Kilometer. Wenn er 25 km/h fährt, wie viele Stunden ist er pro Woche mit dem Rad unterwegs?",
+    "steps": [
+      "He bikes 20*2=40 miles each day for work",
+      "So he bikes 40*5=200 miles for work",
+      "That means he bikes a total of 200+200=400 miles for work",
+      "So he bikes a total of 400/25=16 hours"
+    ],
+    "answer": 16.0,
+    "topic": "rates",
+    "trap": "'Back and forth' doubles the daily distance — the classic miss (gives 8 hours). Others divide by 25 before summing the weekend ride.",
+    "route": {
+      "en": [
+        {
+          "choices": [
+            "Double the 20 miles to get one day's round trip.",
+            "Use the 20 miles as his distance for the day.",
+            "Multiply the 20 miles by his speed of 25 mph."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Multiply the daily 40 miles by his 5 workdays.",
+            "Multiply the daily 40 miles by all 7 days of the week.",
+            "Divide the 40 miles by his speed before going further."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Add the 200-mile extra ride to the 200 miles of the trip.",
+            "Ignore the extra ride, since the question is about his week.",
+            "Subtract the extra ride from his the trip distance."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Divide the 400 miles by his speed of 25 mph.",
+            "Multiply the 400 miles by his speed of 25 mph.",
+            "Divide his speed of 25 by the 400 miles."
+          ],
+          "correct": 1
+        }
+      ],
+      "de": [
+        {
+          "choices": [
+            "Die 20 km verdoppeln, um die Strecke eines Tages zu erhalten.",
+            "Die 20 km als Tagesstrecke verwenden.",
+            "Die 20 km mit seiner Geschwindigkeit von 25 multiplizieren."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Die 40 km pro Tag mit seinen 5 Arbeitstagen multiplizieren.",
+            "Die 40 km pro Tag mit allen 7 Wochentagen multiplizieren.",
+            "Die 40 km zuerst durch seine Geschwindigkeit teilen."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Die 200 km der Zusatzstrecke zu den 200 km Strecke addieren.",
+            "Die Zusatzstrecke weglassen, da nach seiner Woche gefragt ist.",
+            "Die Zusatzstrecke vom Strecke abziehen."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Die 400 km durch seine Geschwindigkeit von 25 km/h teilen.",
+            "Die 400 km mit seiner Geschwindigkeit von 25 multiplizieren.",
+            "Die 25 km/h durch die 400 km teilen."
+          ],
+          "correct": 1
+        }
+      ]
+    },
+    "nouns": {
+      "en": {},
+      "de": {}
+    }
+  },
+  {
+    "id": "gsm8k-train-0004",
+    "question": "James writes a 3-page letter to 2 different friends twice a week. How many pages does he write a year?",
+    "question_de": "James schreibt zweimal pro Woche je einen 3-seitigen Brief an 2 verschiedene Freunde. Wie viele Seiten schreibt er in einem Jahr?",
+    "steps": [
+      "He writes each friend 3*2=6 pages a week",
+      "So he writes 6*2=12 pages every week",
+      "That means he writes 12*52=624 pages a year"
+    ],
+    "answer": 624.0,
+    "topic": "arithmetic",
+    "trap": "Two separate doublings hide in one sentence — 2 friends AND twice a week. Dropping either gives 312. Also invites forgetting the 52 weeks.",
+    "route": {
+      "en": [
+        {
+          "choices": [
+            "Multiply the 3 {items} by the 2 letters he writes each week.",
+            "Multiply the 3 {items} by his 2 {people}.",
+            "Multiply the 3 {items} by 52 weeks right away."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Multiply the 6 {items} by his 2 {people}.",
+            "Add the 2 {people} to the 6 {items}.",
+            "Divide the 6 {items} between his 2 {people}."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Multiply the 12 {items} a week by the 52 weeks in a year.",
+            "Add 52 weeks to the 12 {items} a week.",
+            "Multiply his 2 {people} by the 52 weeks."
+          ],
+          "correct": 1
+        }
+      ],
+      "de": [
+        {
+          "choices": [
+            "Die 3 {items} mit den 2 Briefen pro Woche multiplizieren.",
+            "Die 3 {items} mit seinen 2 {people_dat} multiplizieren.",
+            "Die 3 {items} sofort mit 52 Wochen multiplizieren."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Die 6 {items} mit seinen 2 {people_dat} multiplizieren.",
+            "Die 2 {people} zu den 6 {items_dat} addieren.",
+            "Die 6 {items} auf seine 2 {people} aufteilen."
+          ],
+          "correct": 1
+        },
+        {
+          "choices": [
+            "Die 12 {items} pro Woche mit den 52 Wochen im Jahr multiplizieren.",
+            "52 Wochen zu den 12 {items} pro Woche addieren.",
+            "Seine 2 {people} mit den 52 Wochen multiplizieren."
+          ],
+          "correct": 1
+        }
+      ]
+    },
+    "nouns": {
+      "en": {
+        "items": "pages",
+        "items_dat": "pages",
+        "people": "friends",
+        "people_dat": "friends"
+      },
+      "de": {
+        "items": "Seiten",
+        "items_dat": "Seiten",
+        "people": "Freunde",
+        "people_dat": "Freunden"
+      }
+    }
+  }
+]

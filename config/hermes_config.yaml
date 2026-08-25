@@ -1,0 +1,25 @@
+# Reference Hermes config for the math-tutor demo.
+# These are the keys that matter — merge them into ~/.hermes/config.yaml,
+# don't replace the whole file.
+
+model:
+  default: gemma-4-31b
+  provider: custom:gemma4
+
+custom_providers:
+  - name: Gemma4
+    base_url: https://api.aisc.hpi.de/   # LiteLLM proxy
+    api_key: <your key>
+    model: gemma-4-31b
+    # TODO(spark): swap to http://localhost:8000/v1 once vLLM runs on the DGX
+    # Spark. Nothing else changes — both endpoints are OpenAI-compatible.
+
+# Clarify has TWO timeouts and they are read by different code paths.
+# Setting only one of them will time out the demo on the other surface.
+clarify:
+  timeout: 900        # TUI       — hermes_cli/callbacks.py, default 120
+agent:
+  clarify_timeout: 900  # Telegram/gateway — tools/clarify_gateway.py, default 600
+
+skills:
+  template_vars: true   # required for ${HERMES_SKILL_DIR} in SKILL.md
