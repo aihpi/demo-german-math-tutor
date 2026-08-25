@@ -1,0 +1,72 @@
+<!--
+  base.html — shared style block for every teaching-games template.
+
+  This file is NOT a standalone page. generate_game.py inlines its contents
+  wherever a template writes the marker:
+
+      /*__BASE_CSS__*/
+
+  Keep every colour and spacing token here so the six templates stay visually
+  identical. Template-specific CSS goes in the template's own <style>, after
+  the marker.
+-->
+:root {
+  --bg:      #1a1a1a;
+  --panel:   #212121;
+  --raised:  #282828;
+  --line:    #333333;
+  --line-hi: #4a4a4a;
+  --text:    #e0e0e0;
+  --dim:     #9a9a9a;
+  --faint:   #6e6e6e;
+  --accent:  #FF7500;   /* HPI orange */
+  --blue:    #4A9EFF;
+  --green:   #50C878;
+  --red:     #FF4444;
+  --r:       10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px; line-height: 1.5;
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+/* --- header ---------------------------------------------------------- */
+.top { display: flex; align-items: baseline; gap: 28px; padding: 16px 24px; border-bottom: 1px solid var(--line); }
+.top h1 { font-size: 17px; font-weight: 700; letter-spacing: .6px; color: var(--accent); margin-right: auto; }
+.stat b { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: .8px; margin-left: 7px; }
+.sub { font-size: 15px; color: var(--dim); }
+.accent { color: var(--accent); }
+.blue   { color: var(--blue); }
+/* --- surfaces -------------------------------------------------------- */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px; }
+.card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .9px; color: var(--dim); margin-bottom: 14px; }
+/* --- controls -------------------------------------------------------- */
+button {
+  background: var(--raised); color: var(--text); border: 1px solid var(--line-hi);
+  border-radius: 8px; padding: 11px 24px; font: 600 15px/1 inherit; font-family: inherit;
+  cursor: pointer; transition: border-color .15s, background .15s;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #1a1a1a; }
+button:disabled { background: var(--raised); color: var(--faint); border-color: var(--line); cursor: not-allowed; }
+input[type=range] { accent-color: var(--accent); height: 22px; }
+label { font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: .8px; }
+.num { font-variant-numeric: tabular-nums; }
+/* --- overlay / insight popup ----------------------------------------- */
+.overlay {
+  position: absolute; inset: 0; z-index: 5; padding: 32px;
+  background: rgba(26, 26, 26, .95);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; text-align: center;
+}
+.overlay h2 { font-size: 28px; font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--text); margin: 0; }
+.overlay .insight { color: var(--dim); max-width: 560px; font-size: 16px; line-height: 1.65; }
+.overlay .insight b { color: var(--text); }
+/* --- inline status banner -------------------------------------------- */
+.banner { padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
+          background: rgba(80,200,120,.12); border: 1px solid var(--green); color: var(--green); }
+.banner.warn { background: rgba(255,68,68,.12); border-color: var(--red); color: var(--red); }
+.hide { display: none !important; }

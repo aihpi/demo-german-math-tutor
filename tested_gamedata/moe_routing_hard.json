@@ -1,0 +1,147 @@
+{
+  "title": "MoE ROUTER — HARD",
+  "nouns": {
+    "item": "token",
+    "destination": "expert"
+  },
+  "intro": {
+    "headline": "Now the <span class=\"accent\">tokens fight back</span>",
+    "body": "Faster spawns, and some tokens legitimately belong to more than one expert. Those are drawn with a dashed blue border — either expert counts as correct. 14 tokens per round."
+  },
+  "roundLength": 14,
+  "speed": {
+    "start": 2.6,
+    "increaseEvery": 2,
+    "increaseBy": 0.5
+  },
+  "destinations": [
+    {
+      "name": "Math",
+      "color": "#FF7500",
+      "items": [
+        "7 × 8 =",
+        "∫ sin(x) dx",
+        "prime number",
+        "√144",
+        "eigenvalue",
+        {
+          "text": "numpy.linalg.solve(A,b)",
+          "also": [
+            "Code"
+          ]
+        },
+        {
+          "text": "prove by induction",
+          "also": [
+            "Logic"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Language",
+      "color": "#4A9EFF",
+      "items": [
+        "past tense",
+        "a metaphor",
+        "synonym for",
+        "subject–verb",
+        "syntax tree",
+        {
+          "text": "translate this idiom",
+          "also": [
+            "Translation",
+            "Creative"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Logic",
+      "color": "#B06BFF",
+      "items": [
+        "if and only if",
+        "therefore",
+        "contradiction",
+        "syllogism",
+        "premise"
+      ]
+    },
+    {
+      "name": "Code",
+      "color": "#50C878",
+      "items": [
+        "def sort(arr):",
+        "null pointer",
+        "git rebase -i",
+        "SELECT * FROM",
+        "async await",
+        {
+          "text": "float16 overflow",
+          "also": [
+            "Math",
+            "Science"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Science",
+      "color": "#00C4C4",
+      "items": [
+        "mitochondria",
+        "photosynthesis",
+        "escape velocity",
+        "valence electron",
+        "enzyme",
+        {
+          "text": "half-life of carbon-14",
+          "also": [
+            "Math",
+            "Facts"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Creative",
+      "color": "#FF5FA2",
+      "items": [
+        "once upon a",
+        "write a haiku",
+        "plot twist",
+        "a lullaby",
+        "in watercolour"
+      ]
+    },
+    {
+      "name": "Facts",
+      "color": "#FFD23F",
+      "items": [
+        "capital of Peru",
+        "in 1789",
+        "tallest mountain",
+        "who invented",
+        "population of",
+        {
+          "text": "when did Fermat prove",
+          "also": [
+            "Math"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Translation",
+      "color": "#FF8A4A",
+      "items": [
+        "Bonjour le monde",
+        "Guten Tag",
+        "こんにちは",
+        "por favor",
+        "до свидания"
+      ]
+    }
+  ],
+  "insight": "You routed <b>{accuracy}% correctly</b> at <b>{avgActivated} of {total} experts</b> per token. The dashed tokens had no single right answer — and that is exactly the case real MoE models handle with soft top-k routing: instead of picking one expert, the gate sends the token to two or more and blends their outputs by weight. Your hesitation on those tokens is the gating network's job made visible."
+}

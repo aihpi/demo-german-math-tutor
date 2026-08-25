@@ -1,0 +1,17 @@
+{
+  "title": "TICKET TRIAGE",
+  "nouns": { "item": "message", "destination": "queue" },
+  "intro": {
+    "headline": "Send each <span class=\"accent\">message</span> to the right queue",
+    "body": "Same routing engine, different content. A classifier sits in front of a support inbox and picks one queue per message. Click before it drops. 12 messages per round."
+  },
+  "roundLength": 12,
+  "speed": { "start": 1.5, "increaseEvery": 4, "increaseBy": 0.3 },
+  "destinations": [
+    { "name": "Billing",  "color": "#FF7500", "items": ["charged twice", "cancel my plan", "where is my invoice", "VAT number wrong", "refund request"] },
+    { "name": "Bug",      "color": "#FF4444", "items": ["500 on upload", "app crashes on save", "stack trace attached", "data not syncing", "button does nothing"] },
+    { "name": "Sales",    "color": "#50C878", "items": ["enterprise pricing?", "book a demo", "seat count for 200", "do you offer SSO", "annual contract"] },
+    { "name": "Spam",     "color": "#6E6E6E", "items": ["YOU HAVE WON", "cheap backlinks", "crypto doubling", "Dear Sir/Madam loan", "SEO audit FREE"] }
+  ],
+  "insight": "You sorted <b>{accuracy}%</b> correctly, touching <b>{avgActivated} of {total} queues</b> per message. Routing is routing: whether the destinations are experts in a transformer or humans on a support team, a cheap classifier up front means only the right specialist does any work."
+}

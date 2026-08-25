@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Teaching Game</title>
+<style>
+/*__BASE_CSS__*/
+body { padding: 20px 26px 40px; display: block; }
+#stage { position: relative; height: 132px; margin-bottom: 4px; }
+#arcs { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#items { display: flex; gap: 11px; justify-content: center; flex-wrap: wrap; }
+.tok { padding: 13px 19px; border-radius: var(--r); background: var(--panel); border: 2px solid var(--line);
+       font-size: 19px; transition: border-color .15s, background .15s; }
+.tok.pick { cursor: pointer; }
+.tok.pick:hover { border-color: var(--line-hi); }
+.tok.q { background: var(--accent); border-color: var(--accent); color: #1a1a1a; font-weight: 700; }
+#ctx { text-align: center; font-size: 20px; color: var(--dim); padding: 22px 0; }
+#panels { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; align-items: start; }
+.row { display: grid; grid-template-columns: 96px 1fr 52px; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 15px; }
+.row .w { color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+.row input { width: 100%; }
+.row .n { text-align: right; font-size: 14px; }
+.note { font-size: 13px; color: var(--dim); margin-top: 14px; }
+.note.bad { color: var(--red); }
+.score { font-size: 40px; font-weight: 700; line-height: 1.1; }
+.bars { margin-top: 6px; }
+.bars .b { display: grid; grid-template-columns: 96px 1fr 52px; gap: 12px; align-items: center; margin-bottom: 7px; font-size: 14px; }
+.track { height: 9px; border-radius: 5px; background: var(--raised); position: relative; }
+.track i, .track u { position: absolute; left: 0; top: 0; height: 100%; border-radius: 5px; display: block; }
+.track i { background: var(--blue); }
+.track u { background: var(--accent); opacity: .55; height: 4px; top: 2.5px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 4px; }
+th, td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--faint); font-weight: 500; font-size: 11.5px; text-transform: uppercase; letter-spacing: .6px; }
+tr.total td { border-bottom: 0; border-top: 1px solid var(--line-hi); color: var(--accent); font-weight: 700; padding-top: 8px; }
+.legend { font-size: 13px; color: var(--faint); margin-top: 14px; line-height: 1.7; }
+.sw { display: inline-block; width: 20px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+button { margin-top: 16px; }
+</style>
+</head>
+<body>
+<h1 id="title" style="font-size:17px;font-weight:700;letter-spacing:.6px;color:var(--accent)"></h1>
+<p class="sub" id="prompt" style="margin:8px 0 16px"></p>
+
+<div id="stage"><svg id="arcs"></svg></div>
+<div id="items"></div>
+<div id="ctx" class="hide"></div>
+
+<div id="panels">
+  <div class="card">
+    <h2 id="guessTitle">Your prediction</h2>
+    <div id="sliders"></div>
+    <p class="note" id="note"></p>
+    <button id="go" class="primary">Compute</button>
+  </div>
+  <div class="card hide" id="out">
+    <h2>Result</h2>
+    <p class="score"><span id="scoreV" class="accent">–</span><span style="font-size:15px;color:var(--dim)"> / 100</span></p>
+    <p class="note" id="verdict"></p>
+    <div class="bars" id="bars"></div>
+    <div id="mathWrap" class="hide"><h2 style="margin-top:20px">Weighted sum: output = Σ wⱼ · vⱼ</h2><table id="math"></table></div>
+    <p class="insight" id="insight" style="font-size:14px;margin-top:16px"></p>
+    <p class="legend">
+      <span class="sw" style="background:var(--accent)"></span>your guess &nbsp;
+      <span class="sw" style="background:var(--blue)"></span>the model
+      <span id="formula"></span>
+    </p>
+  </div>
+</div>
+
+<script>
+const GAME_DATA = /*__GAME_DATA__*/;
+
+const $ = id => document.getElementById(id);
+const IT   = GAME_DATA.items;
+const NOUN = Object.assign({ item: "item", query: "query" }, GAME_DATA.nouns);
+const DIMS = GAME_DATA.dims || [];
+const TEMP = GAME_DATA.temp ?? 1;
+const MASK = GAME_DATA.maskSelf !== false;
+// Two data shapes, one scoring path: items carry query/key vectors, or a fixed logit each.
+const PAIRWISE = IT.every(t => Array.isArray(t.q) && Array.isArray(t.v));
+const HASV     = IT.every(t => Array.isArray(t.v)) && DIMS.length > 0;
+
+let qi = PAIRWISE ? (GAME_DATA.startQuery ?? 0) : null, guess = {};
+
+const dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+const softmax = ls => {
+  const mx = Math.max(...ls.filter(isFinite));
+  const ex = ls.map(l => isFinite(l) ? Math.exp(l - mx) : 0);
+  const s = ex.reduce((a, b) => a + b, 0);
+  return ex.map(e => e / s);
+};
+const truth = () => softmax(PAIRWISE
+  ? IT.map((t, j) => (MASK && j === qi) ? -Infinity : dot(IT[qi].q, t.v) * TEMP / Math.sqrt(DIMS.length || 1))
+  : IT.map(t => t.logit * TEMP));
+const skip = j => PAIRWISE && MASK && j === qi;
+
+$("title").textContent  = GAME_DATA.title;
+$("prompt").innerHTML   = GAME_DATA.intro.body;
+$("formula").innerHTML  = PAIRWISE
+  ? "<br>Scores are qᵢ·kⱼ/√d, then softmax." + (MASK ? " Self-attention is masked, so the " + NOUN.query + " must look at its context." : "")
+  : "<br>Scores are the model's raw logits, then softmax.";
+
+IT.forEach((t, i) => {
+  const d = document.createElement("div");
+  d.className = "tok" + (PAIRWISE ? " pick" : "");
+  d.textContent = t.label;
+  if (PAIRWISE) d.onclick = () => pick(i);
+  $("items").appendChild(d);
+});
+const toks = [...document.querySelectorAll(".tok")];
+if (!PAIRWISE) {
+  $("stage").classList.add("hide");
+  $("ctx").classList.remove("hide");
+  $("ctx").innerHTML = GAME_DATA.context || "";
+}
+
+function pick(i) {
+  qi = i;
+  toks.forEach((b, j) => b.classList.toggle("q", j === i));
+  $("out").classList.add("hide");
+  build();
+}
+
+function build() {
+  guess = {};
+  $("sliders").innerHTML = "";
+  $("guessTitle").textContent = PAIRWISE
+    ? `How much does "${IT[qi].label}" attend to each ${NOUN.item}?`
+    : "Your predicted probabilities";
+  IT.forEach((t, j) => {
+    if (skip(j)) return;
+    guess[j] = 20;
+    const r = document.createElement("div");
+    r.className = "row";
+    r.innerHTML = `<span class="w">${t.label}</span><input type="range" min="0" max="100" value="20" data-j="${j}">
+                   <span class="n num" id="n${j}">0.20</span>`;
+    r.querySelector("input").oninput = e => { guess[j] = +e.target.value; refresh(); };
+    $("sliders").appendChild(r);
+  });
+  refresh();
+}
+
+function normalized() {
+  const tot = Object.values(guess).reduce((a, b) => a + b, 0);
+  const out = IT.map(() => 0);
+  for (const j in guess) out[j] = tot ? guess[j] / tot : 0;
+  return [out, tot];
+}
+
+function refresh() {
+  const [n, tot] = normalized();
+  for (const j in guess) $("n" + j).textContent = n[j].toFixed(2);
+  $("note").textContent = tot
+    ? "Σ = 1.00 — sliders are auto-normalized, because a probability distribution has to sum to 1."
+    : "Every slider is 0 — give at least one " + NOUN.item + " some weight.";
+  $("note").className = "note" + (tot ? "" : " bad");
+  $("go").disabled = !tot;
+  if (PAIRWISE) drawArcs(n, null);
+}
+
+// --- arcs (pairwise only) --------------------------------------------------
+function drawArcs(you, model) {
+  const svg = $("arcs"), H = $("stage").clientHeight, base = $("stage").getBoundingClientRect();
+  const cx = toks.map(b => { const r = b.getBoundingClientRect(); return r.left - base.left + r.width / 2; });
+  svg.innerHTML = "";
+  if (qi === null) return;
+  const arc = (j, w, color, dash) => {
+    if (w < 0.005) return;
+    const x0 = cx[qi], x1 = cx[j], lift = Math.min(H - 8, 28 + Math.abs(x1 - x0) * 0.32);
+    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", `M ${x0} ${H} Q ${(x0 + x1) / 2} ${H - lift} ${x1} ${H}`);
+    p.setAttribute("fill", "none"); p.setAttribute("stroke", color);
+    p.setAttribute("stroke-width", (0.8 + w * 17).toFixed(2));
+    p.setAttribute("stroke-linecap", "round");
+    p.setAttribute("opacity", model ? .72 : .85);
+    if (dash) p.setAttribute("stroke-dasharray", "5 5");
+    svg.appendChild(p);
+  };
+  IT.forEach((_, j) => { if (!skip(j)) arc(j, you[j], "#FF7500", !!model); });
+  if (model) IT.forEach((_, j) => { if (!skip(j)) arc(j, model[j], "#4A9EFF", false); });
+}
+
+function fill(tpl, v) { return tpl.replace(/\{(\w+)\}/g, (m, k) => k in v ? v[k] : m); }
+
+$("go").onclick = () => {
+  const [you] = normalized(), real = truth();
+  // total-variation distance: half the L1 gap between the two distributions, in [0,1]
+  const tvd = IT.reduce((s, _, j) => s + Math.abs(you[j] - real[j]), 0) / 2;
+  const score = Math.round((1 - tvd) * 100);
+  $("scoreV").textContent = score;
+  $("verdict").textContent = score >= 85 ? "Close read — you found what the model is looking at."
+                           : score >= 60 ? "Roughly right, but the mass sits in the wrong places."
+                           : "Not what the model does. Look at the blue.";
+
+  $("bars").innerHTML = IT.map((t, j) => skip(j) ? "" :
+    `<div class="b"><span class="w">${t.label}</span>
+       <span class="track"><i style="width:${(real[j] * 100).toFixed(1)}%"></i><u style="width:${(you[j] * 100).toFixed(1)}%"></u></span>
+       <span class="n num">${real[j].toFixed(3)}</span></div>`).join("");
+
+  if (HASV) {
+    const out = DIMS.map((_, d) => IT.reduce((s, t, j) => s + real[j] * t.v[d], 0));
+    $("math").innerHTML =
+      `<tr><th>${NOUN.item}</th><th>wⱼ</th><th>you</th>${DIMS.map(d => `<th>${d}</th>`).join("")}</tr>` +
+      IT.map((t, j) => skip(j)
+        ? `<tr><td>${t.label}</td><td colspan="${2 + DIMS.length}" style="text-align:left;color:var(--faint)">${NOUN.query} — masked</td></tr>`
+        : `<tr><td>${t.label}</td><td>${real[j].toFixed(3)}</td><td class="accent">${you[j].toFixed(2)}</td>
+           ${t.v.map(v => `<td>${(real[j] * v).toFixed(2)}</td>`).join("")}</tr>`).join("") +
+      `<tr class="total"><td>output</td><td></td><td></td>${out.map(o => `<td>${o.toFixed(2)}</td>`).join("")}</tr>`;
+    $("mathWrap").classList.remove("hide");
+  }
+
+  const top = real.indexOf(Math.max(...real));
+  $("insight").innerHTML = fill(GAME_DATA.insight,
+    { score, query: PAIRWISE ? IT[qi].label : "", top: IT[top].label, topP: real[top].toFixed(2) });
+  $("out").classList.remove("hide");
+  if (PAIRWISE) drawArcs(you, real);
+};
+
+addEventListener("resize", () => { if (PAIRWISE) refresh(); });
+if (PAIRWISE) pick(qi); else build();
+</script>
+</body>
+</html>

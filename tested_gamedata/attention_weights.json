@@ -1,0 +1,21 @@
+{
+  "title": "ATTENTION",
+  "intro": {
+    "headline": "Guess the attention pattern",
+    "body": "Pick a <span class=\"accent\">query</span> word, guess how much it attends to every other word, then compare against the real softmax. Each word carries a feature vector; the query vector says what that word is looking for."
+  },
+  "nouns": { "item": "word", "query": "query" },
+  "dims": ["DET", "ENTITY", "ACTION", "PLACE"],
+  "temp": 6.25,
+  "maskSelf": true,
+  "startQuery": 1,
+  "items": [
+    { "label": "The", "v": [1, 0, 0, 0],   "q": [0, 1,   0,   0] },
+    { "label": "cat", "v": [0, 1, 0, 0],   "q": [0, 0,   1,   0.2] },
+    { "label": "sat", "v": [0, 0, 1, 0],   "q": [0, 1,   0,   0.8] },
+    { "label": "on",  "v": [0, 0, 0.3, 1], "q": [0, 0.2, 0,   1] },
+    { "label": "the", "v": [1, 0, 0, 0],   "q": [0, 1,   0,   0] },
+    { "label": "mat", "v": [0, 0.6, 0, 1], "q": [0, 0,   0.6, 0.8] }
+  ],
+  "insight": "You scored <b>{score}/100</b>. \"{query}\" puts most of its weight on <b>{top}</b> ({topP}). Attention is not about nearby words — it is a content lookup: the query vector asks for a kind of information, every key advertises what it has, and the softmax decides how much of each value gets mixed into the output. The bottom row is that mix."
+}

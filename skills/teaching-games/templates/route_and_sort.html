@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Teaching Game</title>
+<style>
+/*__BASE_CSS__*/
+#field { flex: 1; position: relative; overflow: hidden; min-height: 260px; }
+#item { position: absolute; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: var(--r);
+        background: var(--raised); border: 2px solid var(--line-hi); font-size: 22px; font-weight: 500; white-space: nowrap; }
+#item.ambiguous { border-style: dashed; border-color: var(--blue); }
+#dests { display: grid; gap: 10px; padding: 14px 24px 24px; }
+.dest { padding: 18px 8px; border-radius: var(--r); border: 2px solid var(--line); background: var(--panel);
+        cursor: pointer; text-align: center; font-size: 15px; font-weight: 600;
+        transition: transform .08s, background .15s, border-color .15s; }
+.dest:hover { transform: translateY(-3px); border-color: var(--line-hi); }
+.dest .dot { width: 11px; height: 11px; border-radius: 50%; margin: 0 auto 9px; }
+.dest.ok  { background: rgba(80,200,120,.16); border-color: var(--green); }
+.dest.bad { background: rgba(255,68,68,.16); border-color: var(--red); }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1 id="title"></h1>
+  <div class="stat"><b id="sScore">0</b><span>score</span></div>
+  <div class="stat"><b id="sStreak">0</b><span>streak</span></div>
+  <div class="stat"><b id="sAcc">–</b><span>accuracy</span></div>
+  <div class="stat"><b id="sAvg">0.0</b><span id="lAvg"></span></div>
+  <div class="stat"><b id="sLeft">0</b><span id="lLeft"></span></div>
+</div>
+<div id="field">
+  <div id="item" class="hide"></div>
+  <div class="overlay" id="overlay"></div>
+</div>
+<div id="dests"></div>
+
+<script>
+const GAME_DATA = /*__GAME_DATA__*/;
+
+const $ = id => document.getElementById(id);
+const D    = GAME_DATA.destinations;
+const NOUN = Object.assign({ item: "item", destination: "expert" }, GAME_DATA.nouns);
+const SPD  = Object.assign({ start: 1.6, increaseEvery: 3, increaseBy: 0.35 }, GAME_DATA.speed);
+const ROUND = GAME_DATA.roundLength || 12;
+
+// An item is "…text…" or {text, also:[destination names]} for deliberately ambiguous ones.
+const norm = (raw, home) => typeof raw === "string"
+  ? { text: raw, ok: [home] }
+  : { text: raw.text, ok: [home, ...(raw.also || []).map(n => D.findIndex(d => d.name === n))].filter(i => i >= 0) };
+const POOL = D.flatMap((d, i) => d.items.map(r => norm(r, i)));
+
+let score = 0, streak = 0, best = 0, clicks = 0, resolved = 0, hits = 0, left = 0;
+let cur = null, y = 0, speed = SPD.start, raf = 0, locked = true;
+
+$("title").textContent = GAME_DATA.title;
+$("lAvg").textContent  = NOUN.destination + "s / " + NOUN.item;
+$("lLeft").textContent = NOUN.item + "s left";
+$("dests").style.gridTemplateColumns = `repeat(${D.length}, 1fr)`;
+D.forEach((d, i) => {
+  const el = document.createElement("div");
+  el.className = "dest";
+  el.innerHTML = `<div class="dot" style="background:${d.color}"></div>${d.name}`;
+  el.onclick = () => route(i);
+  $("dests").appendChild(el);
+});
+const boxes = [...document.querySelectorAll(".dest")];
+const flash = (i, c) => { boxes[i].classList.add(c); setTimeout(() => boxes[i].classList.remove(c), 320); };
+
+function next() {
+  if (left === 0) return end();
+  left--; $("sLeft").textContent = left;
+  cur = POOL[Math.floor(Math.random() * POOL.length)];
+  $("item").textContent = cur.text;
+  $("item").classList.toggle("ambiguous", cur.ok.length > 1);
+  $("item").classList.remove("hide");
+  y = 0; locked = false;
+  raf = requestAnimationFrame(fall);
+}
+
+function fall() {
+  y += speed;
+  $("item").style.top = y + "px";
+  if (y > $("field").clientHeight - $("item").offsetHeight) return settle(false, cur.ok[0]);
+  raf = requestAnimationFrame(fall);
+}
+
+function route(i) {
+  if (locked) return;
+  clicks++;                                  // every click = one destination activated
+  if (!cur.ok.includes(i)) { flash(i, "bad"); streak = 0; render(); return; }
+  settle(true, i);
+}
+
+function settle(hit, i) {
+  locked = true;
+  cancelAnimationFrame(raf);
+  resolved++;
+  if (hit) {
+    hits++; flash(i, "ok");
+    score += 10 + streak * 2; streak++; best = Math.max(best, streak);
+    if (streak % SPD.increaseEvery === 0) speed += SPD.increaseBy;
+  } else {
+    clicks++;                                // a miss still burned a routing decision
+    flash(i, "bad"); streak = 0;
+    speed = Math.max(SPD.start, speed - SPD.increaseBy);
+  }
+  render();
+  $("item").classList.add("hide");
+  setTimeout(next, 320);
+}
+
+function render() {
+  $("sScore").textContent  = score;
+  $("sStreak").textContent = streak;
+  $("sAcc").textContent    = resolved ? Math.round(hits / resolved * 100) + "%" : "–";
+  $("sAvg").textContent    = resolved ? (clicks / resolved).toFixed(1) : "0.0";
+}
+
+function fill(tpl, v) { return tpl.replace(/\{(\w+)\}/g, (m, k) => k in v ? v[k] : m); }
+
+function end() {
+  locked = true;
+  $("item").classList.add("hide");
+  const avg = resolved ? clicks / resolved : 0;
+  const vals = {
+    score, bestStreak: best, routed: resolved, total: D.length,
+    accuracy: Math.round(hits / Math.max(1, resolved) * 100),
+    avgActivated: avg.toFixed(1),
+    savedPct: Math.round((1 - avg / D.length) * 100),
+  };
+  show(`Round over — <span class="accent">${score}</span> points`, fill(GAME_DATA.insight, vals), "Play again");
+}
+
+function show(head, body, btn) {
+  $("overlay").classList.remove("hide");
+  $("overlay").innerHTML = `<h2>${head}</h2><p class="insight">${body}</p><button class="primary" id="go">${btn}</button>`;
+  $("go").onclick = start;
+}
+
+function start() {
+  $("overlay").classList.add("hide");
+  score = streak = best = clicks = resolved = hits = 0;
+  left = ROUND; speed = SPD.start;
+  render(); next();
+}
+
+show(GAME_DATA.intro.headline, GAME_DATA.intro.body, "Start round");
+render();
+$("sLeft").textContent = ROUND;
+</script>
+</body>
+</html>

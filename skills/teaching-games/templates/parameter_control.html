@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Teaching Game</title>
+<style>
+/*__BASE_CSS__*/
+#wrap { flex: 1; position: relative; min-height: 240px; }
+canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+#banner { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); }
+.controls { display: flex; align-items: center; gap: 18px; padding: 16px 24px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.controls input[type=range] { width: 260px; }
+#pVal { font-size: 16px; font-weight: 600; min-width: 62px; }
+.hint { margin-left: auto; font-size: 13px; color: var(--faint); }
+#insight { margin: 0 24px 22px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1 id="title"></h1>
+  <div class="stat"><b id="sX">–</b><span id="lX"></span></div>
+  <div class="stat"><b id="sY">–</b><span id="lY"></span></div>
+  <div class="stat"><b id="sG">–</b><span>gradient</span></div>
+  <div class="stat"><b id="sN">0</b><span>steps</span></div>
+</div>
+<div id="wrap">
+  <canvas id="cv"></canvas>
+  <div id="banner" class="banner hide"></div>
+  <div class="overlay" id="overlay"></div>
+</div>
+<div class="controls">
+  <label id="pLabel" for="p"></label>
+  <input id="p" type="range">
+  <span id="pVal" class="num"></span>
+  <button id="step" class="primary">Step</button>
+  <button id="auto">Auto-run</button>
+  <button id="reset">Reset</button>
+  <span class="hint" id="hint"></span>
+</div>
+<div class="card hide" id="insight"><h2>What just happened</h2><p class="insight" id="insightBody"></p></div>
+
+<script>
+const GAME_DATA = /*__GAME_DATA__*/;
+
+const $ = id => document.getElementById(id);
+const L    = GAME_DATA.landscape;
+const P    = Object.assign({ label: "Learning rate", min: 0.001, max: 1, default: 0.1, log: true }, GAME_DATA.param);
+const AX   = Object.assign({ x: "position", y: "loss" }, GAME_DATA.axis);
+const MSG  = Object.assign({
+  converged: "Converged — the gradient is ~0, so every further step goes nowhere. This is a local optimum.",
+  diverged:  "Diverged — the step size is too big, the ball shot clean off the landscape.",
+  tooSlow:   "Barely moving — the slope is steep but the step size is tiny. This is what a too-small learning rate costs you.",
+}, GAME_DATA.messages);
+const [XMIN, XMAX] = L.domain || [-6, 6];
+const SIGN = GAME_DATA.direction === "max" ? -1 : 1;   // ascent = descend the negated curve
+const TOL  = L.tolerance || 1e-3;
+
+// f and its EXACT derivative, both read off the declared terms — no eval, no finite differences.
+const TERM = {
+  const: (t, x) => t.c,                                    lin:  (t, x) => t.m * x,
+  quad:  (t, x) => t.a * x * x,                            cubic:(t, x) => t.a * x * x * x,
+  sin:   (t, x) => t.amp * Math.sin(t.freq * x + (t.phase || 0)),
+  cos:   (t, x) => t.amp * Math.cos(t.freq * x + (t.phase || 0)),
+};
+const DTERM = {
+  const: () => 0,                                          lin:  t => t.m,
+  quad:  (t, x) => 2 * t.a * x,                            cubic:(t, x) => 3 * t.a * x * x,
+  sin:   (t, x) => t.amp * t.freq * Math.cos(t.freq * x + (t.phase || 0)),
+  cos:   (t, x) => -t.amp * t.freq * Math.sin(t.freq * x + (t.phase || 0)),
+};
+const bad = L.terms.filter(t => !(t.type in TERM)).map(t => t.type);
+if (bad.length) throw new Error("unknown landscape term type(s): " + bad.join(", "));
+const f  = x => L.terms.reduce((s, t) => s + TERM[t.type](t, x), 0);
+const df = x => L.terms.reduce((s, t) => s + DTERM[t.type](t, x), 0);
+
+const cv = $("cv"), ctx = cv.getContext("2d");
+let W = 0, H = 0, YMIN = 0, YMAX = 0;
+let x = null, steps = 0, trail = [], running = false, done = false;
+
+const sx = v => (v - XMIN) / (XMAX - XMIN) * W;
+const sy = v => H - 44 - (v - YMIN) / (YMAX - YMIN) * (H - 96);
+const rate = () => P.log ? Math.pow(10, +$("p").value) : +$("p").value;
+
+function resize() {
+  const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
+  W = r.width; H = r.height;
+  cv.width = W * d; cv.height = H * d;
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0; i <= 600; i++) { const v = f(XMIN + i / 600 * (XMAX - XMIN)); lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  const pad = (hi - lo) * 0.12 || 1;
+  YMIN = lo - pad; YMAX = hi + pad;
+  draw();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.beginPath();
+  for (let i = 0; i <= 600; i++) {
+    const xv = XMIN + i / 600 * (XMAX - XMIN);
+    i ? ctx.lineTo(sx(xv), sy(f(xv))) : ctx.moveTo(sx(xv), sy(f(xv)));
+  }
+  ctx.strokeStyle = "#4a4a4a"; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  ctx.fillStyle = "rgba(255,117,0,0.05)"; ctx.fill();
+
+  if (trail.length > 1) {
+    ctx.beginPath();
+    trail.forEach((p, i) => i ? ctx.lineTo(sx(p), sy(f(p))) : ctx.moveTo(sx(p), sy(f(p))));
+    ctx.strokeStyle = "rgba(255,117,0,.45)"; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = "rgba(255,117,0,.35)";
+    trail.forEach(p => { ctx.beginPath(); ctx.arc(sx(p), sy(f(p)), 2.5, 0, 7); ctx.fill(); });
+  }
+  if (x === null) return;
+
+  const g = df(x), r = (XMAX - XMIN) * 0.09;      // tangent: the gradient made visible
+  ctx.beginPath();
+  ctx.moveTo(sx(x - r), sy(f(x) - g * r));
+  ctx.lineTo(sx(x + r), sy(f(x) + g * r));
+  ctx.strokeStyle = "#4A9EFF"; ctx.lineWidth = 1.8; ctx.setLineDash([6, 5]); ctx.stroke(); ctx.setLineDash([]);
+
+  ctx.beginPath(); ctx.arc(sx(x), sy(f(x)), 10, 0, 7);
+  ctx.fillStyle = done ? "#50C878" : "#FF7500"; ctx.fill();
+  ctx.strokeStyle = "#1a1a1a"; ctx.lineWidth = 2.5; ctx.stroke();
+}
+
+const say = (t, warn) => { $("banner").textContent = t; $("banner").className = "banner" + (warn ? " warn" : ""); };
+const clearSay = () => $("banner").className = "banner hide";
+
+function stats() {
+  $("sX").textContent = x === null ? "–" : x.toFixed(3);
+  $("sY").textContent = x === null ? "–" : f(x).toFixed(3);
+  $("sG").textContent = x === null ? "–" : df(x).toFixed(3);
+  $("sN").textContent = steps;
+}
+
+function fill(tpl, v) { return tpl.replace(/\{(\w+)\}/g, (m, k) => k in v ? v[k] : m); }
+
+function finish(kind) {
+  done = true; stop();
+  say(MSG[kind], kind !== "converged");
+  if (kind !== "converged") return;
+  $("insightBody").innerHTML = fill(GAME_DATA.insight,
+    { steps, rate: rate().toFixed(3), x: x.toFixed(3), value: f(x).toFixed(3) });
+  $("insight").classList.remove("hide");
+}
+
+function step() {
+  if (x === null || done) return;
+  const g = SIGN * df(x), nx = x - rate() * g;
+  if (nx < XMIN || nx > XMAX) {
+    x = Math.max(XMIN, Math.min(XMAX, nx)); trail.push(x); steps++;
+    stats(); draw(); return finish("diverged");
+  }
+  const moved = Math.abs(nx - x);
+  x = nx; trail.push(x); steps++;
+  stats(); draw();
+  if (Math.abs(df(x)) < TOL) return finish("converged");
+  // steep slope but a negligible step is the signature of a too-small rate
+  if (moved < 1e-3 && Math.abs(df(x)) > 0.1) say(MSG.tooSlow, true); else clearSay();
+}
+
+function stop() { running = false; $("auto").textContent = "Auto-run"; $("auto").classList.remove("primary"); }
+function loop() { if (!running) return; step(); setTimeout(() => requestAnimationFrame(loop), 60); }
+
+function place(xv) {
+  x = Math.max(XMIN, Math.min(XMAX, xv));
+  steps = 0; trail = [x]; done = false; stop(); clearSay();
+  $("insight").classList.add("hide");
+  stats(); draw();
+}
+
+cv.onclick = e => place(XMIN + (e.clientX - cv.getBoundingClientRect().left) / W * (XMAX - XMIN));
+$("step").onclick = step;
+$("auto").onclick = () => {
+  if (running) return stop();
+  if (x === null || done) return;
+  running = true; $("auto").textContent = "Pause"; $("auto").classList.add("primary"); loop();
+};
+$("reset").onclick = () => { x = null; steps = 0; trail = []; done = false; stop(); clearSay(); $("insight").classList.add("hide"); stats(); draw(); };
+$("p").oninput = () => {
+  $("pVal").textContent = rate().toFixed(3);
+  if (done && !running) { done = false; clearSay(); $("insight").classList.add("hide"); draw(); }
+};
+
+$("title").textContent  = GAME_DATA.title;
+$("lX").textContent     = AX.x;
+$("lY").textContent     = AX.y;
+$("pLabel").textContent = P.label;
+$("hint").textContent   = "Click the landscape to place the ball";
+Object.assign($("p"), P.log
+  ? { min: Math.log10(P.min), max: Math.log10(P.max), step: 0.01, value: Math.log10(P.default) }
+  : { min: P.min, max: P.max, step: (P.max - P.min) / 200, value: P.default });
+$("pVal").textContent = rate().toFixed(3);
+
+$("overlay").innerHTML = `<h2>${GAME_DATA.intro.headline}</h2><p class="insight">${GAME_DATA.intro.body}</p>
+  <button class="primary" id="go">Start</button>`;
+$("go").onclick = () => { $("overlay").classList.add("hide"); resize(); place(GAME_DATA.start ?? (XMIN + XMAX) / 2 + (XMAX - XMIN) * 0.25); };
+addEventListener("resize", resize);
+resize(); stats();
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "title": "GRADIENT DESCENT",
+  "intro": {
+    "headline": "Roll the ball into a <span class=\"accent\">minimum</span>",
+    "body": "The curve is a loss landscape. The ball is your current parameter. Each step moves it downhill by learning-rate × gradient. Set the rate, click Step or Auto-run, and watch what too-big and too-small actually look like."
+  },
+  "landscape": {
+    "domain": [-6, 6],
+    "terms": [ { "type": "quad", "a": 0.15 }, { "type": "sin", "amp": 1, "freq": 1.5 } ],
+    "tolerance": 0.001
+  },
+  "direction": "min",
+  "start": 3.0,
+  "param": { "label": "Learning rate", "min": 0.001, "max": 1.0, "default": 0.1, "log": true },
+  "axis": { "x": "parameter θ", "y": "loss" },
+  "messages": {
+    "converged": "Converged — the gradient is ~0, so every further step goes nowhere. This is a local minimum, not necessarily the global one.",
+    "diverged": "Diverged — the learning rate is too high, the ball shot clean off the landscape.",
+    "tooSlow": "Barely moving — the slope is steep but each step is tiny. This is what a too-small learning rate costs you."
+  },
+  "insight": "Settled at θ = <b>{x}</b> with loss <b>{value}</b> after <b>{steps} steps</b> at a learning rate of {rate}. Notice you landed in the nearest valley, not the deepest one — gradient descent only ever sees the slope directly under the ball. Real training runs this same update over billions of parameters at once, which is why the learning rate is the single most consequential number in the config."
+}

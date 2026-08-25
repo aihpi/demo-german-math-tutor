@@ -1,0 +1,40 @@
+{
+  "title": "NEXT-WORD PROBABILITY",
+  "intro": {
+    "headline": "Guess the model's next-token distribution",
+    "body": "Same predict-then-verify engine, no attention involved. The model has scored every candidate with a raw logit. Guess the probabilities it will produce, then see the softmax."
+  },
+  "nouns": {
+    "item": "token",
+    "query": "context"
+  },
+  "context": "The cat sat on the <span class=\"accent\">___</span>",
+  "temp": 1,
+  "items": [
+    {
+      "label": "mat",
+      "logit": 4.1
+    },
+    {
+      "label": "floor",
+      "logit": 3.2
+    },
+    {
+      "label": "couch",
+      "logit": 2.6
+    },
+    {
+      "label": "roof",
+      "logit": 1.1
+    },
+    {
+      "label": "bicycle",
+      "logit": -0.8
+    },
+    {
+      "label": "purple",
+      "logit": -2.4
+    }
+  ],
+  "insight": "You scored <b>{score}/100</b>. The model's top token is <b>{top}</b> at {topP}. Logits are unbounded scores, not probabilities — softmax is what turns them into a distribution that sums to 1. It converts <i>additive</i> score gaps into <i>multiplicative</i> odds: the 0.9 logit gap between the top two candidates is exactly a 2.46× probability ratio, because e<sup>0.9</sup> = 2.46. Raising the temperature shrinks every gap toward uniform; lowering it sharpens toward always picking the argmax."
+}

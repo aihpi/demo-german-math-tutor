@@ -1,0 +1,22 @@
+{
+  "title": "GRADIENT ASCENT",
+  "intro": {
+    "headline": "Climb to the <span class=\"accent\">highest reward</span>",
+    "body": "Same engine, flipped sign. The curve is now a reward landscape and the update climbs instead of descends. This is what policy-gradient methods do: nudge the parameter in whichever direction increases expected reward."
+  },
+  "landscape": {
+    "domain": [-8, 8],
+    "terms": [ { "type": "quad", "a": -0.08 }, { "type": "sin", "amp": 1.4, "freq": 0.9, "phase": 0.5 }, { "type": "lin", "m": 0.15 } ],
+    "tolerance": 0.001
+  },
+  "direction": "max",
+  "start": -6.0,
+  "param": { "label": "Step size", "min": 0.01, "max": 3.0, "default": 0.3, "log": true },
+  "axis": { "x": "policy θ", "y": "reward" },
+  "messages": {
+    "converged": "Converged — the gradient is ~0. The policy has stopped improving; it sits on a local reward peak.",
+    "diverged": "Diverged — the step size is too large, the policy blew past the edge of the landscape.",
+    "tooSlow": "Barely moving — reward is climbing steeply but each update is tiny. Training would take forever."
+  },
+  "insight": "Peaked at θ = <b>{x}</b> with reward <b>{value}</b> after <b>{steps} steps</b> at step size {rate}. Ascent and descent are the same algorithm with one sign flipped — the engine drawing this landscape is byte-identical to the gradient-descent game. Starting somewhere else lands you on a different peak, which is exactly why RL runs are seed-sensitive."
+}

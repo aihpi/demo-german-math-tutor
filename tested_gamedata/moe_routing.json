@@ -1,0 +1,21 @@
+{
+  "title": "MoE ROUTER",
+  "nouns": { "item": "token", "destination": "expert" },
+  "intro": {
+    "headline": "Route each <span class=\"accent\">token</span> to the right expert",
+    "body": "A Mixture-of-Experts model has many experts but wakes only a couple of them per token. Click the matching expert before the token hits the floor. 12 tokens per round."
+  },
+  "roundLength": 12,
+  "speed": { "start": 1.6, "increaseEvery": 3, "increaseBy": 0.35 },
+  "destinations": [
+    { "name": "Math",        "color": "#FF7500", "items": ["7 × 8 =", "∫ sin(x) dx", "prime number", "√144", "eigenvalue"] },
+    { "name": "Language",    "color": "#4A9EFF", "items": ["past tense", "a metaphor", "synonym for", "subject–verb", "syntax tree"] },
+    { "name": "Logic",       "color": "#B06BFF", "items": ["if and only if", "therefore", "contradiction", "syllogism", "premise"] },
+    { "name": "Code",        "color": "#50C878", "items": ["def sort(arr):", "null pointer", "git rebase -i", "SELECT * FROM", "async await"] },
+    { "name": "Science",     "color": "#00C4C4", "items": ["mitochondria", "photosynthesis", "escape velocity", "valence electron", "enzyme"] },
+    { "name": "Creative",    "color": "#FF5FA2", "items": ["once upon a", "write a haiku", "plot twist", "a lullaby", "in watercolour"] },
+    { "name": "Facts",       "color": "#FFD23F", "items": ["capital of Peru", "in 1789", "tallest mountain", "who invented", "population of"] },
+    { "name": "Translation", "color": "#FF8A4A", "items": ["Bonjour le monde", "Guten Tag", "こんにちは", "por favor", "до свидания"] }
+  ],
+  "insight": "You routed <b>{accuracy}% correctly</b> while activating <b>{avgActivated} of {total} experts</b> per token. A dense model runs all {total} every single time — you used <b class=\"accent\">{savedPct}% less compute</b>. In a real MoE a tiny gating network makes that same call thousands of times a second, which is how a 31.6B-parameter model runs on 3.2B parameters of compute."
+}
