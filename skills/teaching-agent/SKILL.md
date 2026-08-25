@@ -59,9 +59,16 @@ this file.
 
 ## Step 1 — Decide the Mode, Pitch It, Then Ask
 
-Read `concept_to_output.md` and decide: WATCH, PLAY, or both. The test is
-whether there is a decision the learner can get wrong — if there is, they should
-play it; if there is only a magnitude to notice, they should watch it.
+**First, check what was actually asked.** If the question is about *history,
+provenance, naming, or why something mattered* — "the history of backprop", "who
+invented X", "why was that paper important" — it is a question to answer, not a
+concept to gamify. Answer it in prose (see *Explaining in Prose*), then offer the
+mechanism as a follow-up. Pitching a game at someone who asked for history does
+not answer them, however well the adjacent mechanism maps.
+
+Otherwise read `concept_to_output.md` and decide: WATCH, PLAY, or both. The test
+is whether there is a decision the learner can get wrong — if there is, they
+should play it; if there is only a magnitude to notice, they should watch it.
 
 Then pitch in **one or two sentences** what will actually happen — not what the
 concept is. "You'll see 16 experts fire while the MoE fires 3, then route tokens

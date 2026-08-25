@@ -55,6 +55,12 @@ bandits
 **Neither** — history, naming, why a paper mattered, what a library is called.
 Answer in prose. Not everything wants a picture.
 
+**A historical question outranks decomposition.** "Teach me backprop" is a
+mechanism, and the update step is a game. "Teach me *the history of* backprop"
+is a question about people and dates — answer that first, briefly, and *then*
+offer the mechanism. Decomposition exists for concepts that do not map, not as a
+way to avoid answering what was asked.
+
 ## Cached scenes
 
 `scene_data/index.json` lists SCENE_DATA that has been rendered and checked. Use
