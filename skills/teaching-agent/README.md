@@ -1,19 +1,47 @@
-# Teaching Games — a Hermes Agent skill
+# Teaching Agent — a Hermes Agent skill
 
-Teaches a concept by generating a playable browser game, serving it on loopback,
-and explaining afterwards what the player just did. Five game engines. Each one is a complete HTML page with two markers punched
+Teaches a concept by rendering an animation to **watch**, generating a game to
+**play**, or both in sequence — then explaining what the learner just saw and did.
+
+Two engines sets, one skill:
+
+- **WATCH** — `manim_templates/comparison_split.py` renders a 1080p60 MP4 from a
+  SCENE_DATA JSON object. Plays inline in the chat via a `#media:` marker.
+- **PLAY** — five HTML game engines built from a GAME_DATA JSON object. Opens in
+  the preview rail via a `#preview/` marker.
+
+`references/concept_to_output.md` decides which. The two markers are not
+interchangeable: video takes an absolute file path, the game takes a loopback URL.
+
+## Animations Each one is a complete HTML page with two markers punched
 out of it; `generate_game.py` fills them in and writes a standalone file that
 needs no server, no network, and no build step to open.
 
 ```bash
-python3 skills/teaching-games/scripts/generate_game.py \
+python3 skills/teaching-agent/scripts/generate_game.py \
     --template route_and_sort \
     --game-data-file tested_gamedata/moe_routing.json \
     --out /tmp/game.html
 
-python3 skills/teaching-games/scripts/serve_game.py --file /tmp/game.html
+python3 skills/teaching-agent/scripts/serve_game.py --file /tmp/game.html
 # -> http://127.0.0.1:8080/game.html
 ```
+
+```bash
+python3 skills/teaching-agent/scripts/render_scene.py --author "dense vs MoE inference"
+python3 skills/teaching-agent/scripts/render_scene.py --data ar_vs_diffusion.json --quality l
+```
+
+`--author` generates SCENE_DATA, retries twice feeding the validator's error
+back, then falls back to a cached scene — the same contract as
+`generate_game.py --author`. Renders 1080p60 in ~15 s; the whole
+generate-and-render round trip is 40–70 s.
+
+The template reads everything from `SCENE_DATA_PATH` and is never edited to
+change the concept: dense-vs-MoE and AR-vs-diffusion render from a byte-identical
+Python file.
+
+## Games
 
 | template | mechanic | tested with |
 |---|---|---|
@@ -33,7 +61,7 @@ template-picking rules are in
 The skill is self-contained — everything it reads lives under this directory:
 
 ```bash
-cp -r skills/teaching-games ~/.hermes/skills/
+cp -r skills/teaching-agent ~/.hermes/skills/
 ```
 
 `SKILL.md` uses `${HERMES_SKILL_DIR}`, so `skills.template_vars: true` must be

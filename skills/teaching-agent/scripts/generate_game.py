@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inject a GAME_DATA object into a teaching-games template.
+"""Inject a GAME_DATA object into a teaching-agent template.
 
     generate_game.py --template route_and_sort --game-data-file moe_routing.json
     generate_game.py --template route_and_sort --game-data '{"title": ...}'

@@ -1,0 +1,251 @@
+#!/usr/bin/env python3
+"""Render a JSON-driven Manim animation and hand back a marker the chat can play.
+
+    render_scene.py --author "dense vs MoE inference"          # generate, retry, render
+    render_scene.py --template comparison_split --data dense_vs_moe.json
+    render_scene.py --author "..." --quality l                 # fast preview
+
+Prints one line: a `#media:` marker the desktop app turns into an inline video
+player. Provenance (which attempt worked, or that a cached scene was used) goes
+to stderr, so stdout is identical whether the scene was authored live or not.
+"""
+import argparse
+import json
+import os
+import pathlib
+import re
+import subprocess
+import sys
+import time
+import urllib.parse
+import urllib.request
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+TEMPLATES, SCENE_DATA = ROOT / "manim_templates", ROOT / "scene_data"
+
+# manim.constants.QUALITIES — the older copy of this map in the manim-animator
+# skill omits "p", so a -qp render died on a KeyError instead of rendering.
+QUALITY = {"l": "480p15", "m": "720p30", "h": "1080p60", "p": "1440p60", "k": "2160p60"}
+
+REQUIRED = {"comparison_split": ["title", "left", "right"]}
+
+
+def resolve(kind: str, name: str, folder: pathlib.Path, suffix: str) -> pathlib.Path:
+    for candidate in (pathlib.Path(name), folder / name, folder / f"{name}{suffix}"):
+        if candidate.exists():
+            return candidate.resolve()
+    have = ", ".join(sorted(p.stem for p in folder.glob(f"*{suffix}")))
+    sys.exit(f"no {kind} '{name}'. Available: {have}")
+
+
+def scene_names(template: pathlib.Path) -> list[str]:
+    return re.findall(r"^class (\w+)\(Scene\)", template.read_text(), re.M)
+
+
+def validate(template: str, data) -> None:
+    """Catch the shapes that render into something broken rather than erroring."""
+    if not isinstance(data, dict):
+        raise ValueError(f"SCENE_DATA must be a JSON object, got {type(data).__name__}")
+    missing = [k for k in REQUIRED.get(template, []) if k not in data]
+    if missing:
+        raise ValueError(f"{template}: SCENE_DATA is missing required field(s): {', '.join(missing)}")
+    for side in ("left", "right"):
+        s = data.get(side, {})
+        if not isinstance(s, dict) or not s.get("label"):
+            raise ValueError(f"{template}: '{side}' needs a label")
+        n = s.get("nodes", {})
+        total, active = int(n.get("total", 0)), n.get("active", 0)
+        if total < 1:
+            raise ValueError(f"{template}: {side}.nodes.total must be at least 1")
+        if total > 200:
+            raise ValueError(f"{template}: {side}.nodes.total is {total}; over ~120 the dots are unreadable")
+        count = len(active) if isinstance(active, list) else int(active)
+        if count > total:
+            raise ValueError(f"{template}: {side}.nodes.active ({count}) exceeds total ({total})")
+        if n.get("arrangement") == "grid":
+            rows, cols = int(n.get("rows", 0)), int(n.get("cols", 0))
+            if rows * cols != total:
+                raise ValueError(
+                    f"{template}: {side}.nodes rows*cols ({rows}x{cols}={rows * cols}) "
+                    f"must equal total ({total})")
+        act = n.get("activation", "stagger")
+        if act not in ("stagger", "sequential", "simultaneous"):
+            raise ValueError(f"{template}: {side}.nodes.activation '{act}' must be "
+                             "stagger, sequential or simultaneous")
+        if "metric" in s and not isinstance(s["metric"].get("value", 0), (int, float)):
+            raise ValueError(f"{template}: {side}.metric.value must be a number")
+
+
+# ---------------------------------------------------------------- authoring --
+def cached_for(concept: str):
+    index = SCENE_DATA / "index.json"
+    if not index.exists():
+        return None
+    needle = concept.lower()
+    for e in json.loads(index.read_text())["entries"]:
+        if any(m in needle for m in e["match"]):
+            path = SCENE_DATA / e["file"]
+            if path.exists():
+                return e["template"], json.loads(path.read_text()), e["file"]
+    return None
+
+
+def model_config(args):
+    base, key, model = args.base_url, args.api_key, args.model
+    if not (base and key):
+        cfg = pathlib.Path.home() / ".hermes/config.yaml"
+        if cfg.exists():
+            text = cfg.read_text()
+            base = base or (re.search(r"base_url: (\S+)", text) or [None, None])[1]
+            key = key or (re.search(r"api_key: (sk-\S+)", text) or [None, None])[1]
+            model = model or (re.search(r"default: (\S+)", text) or [None, None])[1]
+    return (base or os.environ.get("TEACHING_GAMES_BASE_URL"),
+            key or os.environ.get("TEACHING_GAMES_API_KEY"),
+            model or os.environ.get("TEACHING_GAMES_MODEL"))
+
+
+def ask_model(base, key, model, messages, timeout=180):
+    body = json.dumps({"model": model, "temperature": 0.2, "max_tokens": 2500,
+                       "messages": messages}).encode()
+    req = urllib.request.Request(base.rstrip("/") + "/v1/chat/completions", body,
+                                 {"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=timeout) as f:
+        return json.load(f)["choices"][0]["message"]["content"]
+
+
+def author(concept: str, template: str, retries: int, args):
+    """Same shape as generate_game.py --author: retry with the exact error, then cache.
+
+    A model that has just emitted broken JSON is the least reliable thing to ask
+    for a correction, so the retry is deterministic and lives here rather than in
+    the agent loop.
+    """
+    base, key, model = model_config(args)
+    guide = (ROOT / "references/scenedata_format_guide.md").read_text()
+    system = (guide + "\n\nReply with ONE JSON object and nothing else — the SCENE_DATA itself, "
+                      "with no wrapper key.")
+    messages = [{"role": "system", "content": system},
+                {"role": "user", "content": f"Make a comparison animation for: {concept}"}]
+    last = "no attempt made"
+
+    if base and key and model:
+        for attempt in range(retries + 1):
+            raw = ""
+            try:
+                raw = ask_model(base, key, model, messages)
+                blob = re.search(r"\{.*\}", raw, re.S)
+                if not blob:
+                    raise ValueError("no JSON object in the reply")
+                data = json.loads(blob.group(0))
+                validate(template, data)
+                return data, f"model (attempt {attempt + 1})"
+            except Exception as e:  # noqa: BLE001 — any failure is a retry
+                last = f"{type(e).__name__}: {e}"
+                print(f"authoring attempt {attempt + 1} failed: {last}", file=sys.stderr)
+                if attempt == retries:
+                    break
+                messages += [
+                    {"role": "assistant", "content": raw},
+                    {"role": "user", "content": f"Your JSON was invalid: {last}. "
+                                                "Fix it and return only valid JSON."},
+                ]
+    else:
+        last = "no model endpoint configured"
+        print(f"skipping live authoring: {last}", file=sys.stderr)
+
+    fallback = cached_for(concept)
+    if not fallback:
+        raise ValueError(f"live authoring failed ({last}) and no cached scene matches '{concept}'")
+    _, data, name = fallback
+    print(f"falling back to cached {name} after {retries + 1} attempts", file=sys.stderr)
+    return data, f"cache ({name})"
+
+
+def media_marker(path: pathlib.Path) -> str:
+    """The only markdown the desktop app turns into an inline video player.
+
+    It streams the file over a custom Electron scheme with Range support, so it
+    takes an absolute PATH, not an http URL — the opposite of the game preview,
+    which needs loopback http and rejects file paths.
+    """
+    return f"[Watch: {path.name}](#media:{urllib.parse.quote(str(path), safe='')})"
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--template", default="comparison_split")
+    g = p.add_mutually_exclusive_group(required=True)
+    g.add_argument("--data", help="a .json file in scene_data/")
+    g.add_argument("--author", metavar="CONCEPT",
+                   help="generate SCENE_DATA live, retrying on invalid JSON, then falling back to cache")
+    p.add_argument("--quality", default="h", choices=sorted(QUALITY),
+                   help="l=480p15 m=720p30 h=1080p60 (default) p=1440p60 k=2160p60")
+    p.add_argument("--retries", type=int, default=2)
+    p.add_argument("--scene", help="scene class name; inferred from the template if omitted")
+    p.add_argument("--out-name", help="basename for the rendered file (default: the scene class)")
+    p.add_argument("--verbose", action="store_true", help="also print render time, size and duration")
+    p.add_argument("--model"), p.add_argument("--base-url"), p.add_argument("--api-key")
+    a = p.parse_args()
+
+    template = resolve("template", a.template, TEMPLATES, ".py")
+
+    if a.author:
+        try:
+            data, how = author(a.author, template.stem, max(0, a.retries), a)
+        except ValueError as e:
+            print(str(e), file=sys.stderr)
+            return 2
+        print(f"source: {how}", file=sys.stderr)
+        slug = re.sub(r"[^a-z0-9]+", "_", a.author.lower()).strip("_")[:40] or "scene"
+        data_path = pathlib.Path("/tmp") / f"scene_{slug}.json"
+        data_path.write_text(json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        data_path = resolve("scene data", a.data, SCENE_DATA, ".json")
+        try:
+            validate(template.stem, json.loads(data_path.read_text()))
+        except json.JSONDecodeError as e:
+            print(f"invalid JSON at line {e.lineno} col {e.colno}: {e.msg}", file=sys.stderr)
+            return 2
+        except ValueError as e:
+            print(str(e), file=sys.stderr)
+            return 2
+        slug = data_path.stem
+
+    scenes = scene_names(template)
+    scene = a.scene or (scenes[0] if scenes else None)
+    if not scene:
+        sys.exit(f"{template.name} defines no Scene subclass")
+
+    env = {**os.environ, "SCENE_DATA_PATH": str(data_path)}
+    started = time.time()
+    r = subprocess.run(["manim", f"-q{a.quality}", str(template), scene],
+                       capture_output=True, text=True, env=env)
+    elapsed = time.time() - started
+
+    if r.returncode != 0:
+        print("\n".join((r.stderr or r.stdout).splitlines()[-30:]), file=sys.stderr)
+        print(f"\nrender failed after {elapsed:.1f}s", file=sys.stderr)
+        return r.returncode
+
+    out = pathlib.Path("media/videos") / template.stem / QUALITY[a.quality] / f"{scene}.mp4"
+    if not out.exists():
+        print(f"manim exited 0 but {out} is missing", file=sys.stderr)
+        return 1
+
+    # Rename per concept so a second render never overwrites the first — the
+    # agent may hand back two animations in one session.
+    final = out.with_name(f"{a.out_name or slug}.mp4")
+    out.replace(final)
+    final = final.resolve()
+
+    print(media_marker(final))
+    print(f"rendered in {elapsed:.1f}s -> {final} ({final.stat().st_size / 1024:.0f} KB)", file=sys.stderr)
+    if a.verbose:
+        dur = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                              "-of", "csv=p=0", str(final)], capture_output=True, text=True).stdout.strip()
+        print(f"  quality {QUALITY[a.quality]}  duration {float(dur):.1f}s" if dur else "", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

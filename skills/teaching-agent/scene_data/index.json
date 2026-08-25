@@ -1,0 +1,9 @@
+{
+  "_comment": "Cache manifest. render_scene.py --author falls back to these when live authoring fails. `match` entries are lowercase substrings tested against the concept.",
+  "entries": [
+    { "file": "dense_vs_moe.json", "template": "comparison_split",
+      "match": ["dense vs moe", "moe", "mixture of experts", "expert routing", "active parameters", "sparse model"] },
+    { "file": "ar_vs_diffusion.json", "template": "comparison_split",
+      "match": ["autoregressive", "diffusion", "ar vs", "parallel decoding", "denoising", "tokens per forward"] }
+  ]
+}

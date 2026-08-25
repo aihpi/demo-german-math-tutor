@@ -5,7 +5,7 @@ Run after editing any tested_gamedata/*.json, then update the script to match.
 """
 import json, math, pathlib
 
-GD = pathlib.Path(__file__).resolve().parent.parent / "skills/teaching-games/tested_gamedata"
+GD = pathlib.Path(__file__).resolve().parent.parent / "skills/teaching-agent/tested_gamedata"
 load = lambda n: json.loads((GD / n).read_text())
 
 moe, hard = load("moe_routing.json"), load("moe_routing_hard.json")

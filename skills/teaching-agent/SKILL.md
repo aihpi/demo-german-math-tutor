@@ -1,29 +1,37 @@
 ---
-name: teaching-games
-description: Use when the user wants a concept taught interactively, or asks to learn or be shown how something works. Builds a playable browser game for the concept, serves it on loopback, and connects what the player did to what the concept is. Falls back to explaining directly when a concept has no game in it.
+name: teaching-agent
+description: Use when the user wants a concept taught, shown, or explained interactively. Renders an animation to watch, builds a game to play, or both in sequence, then connects what they saw and did to what the concept is. Falls back to prose when a concept suits neither.
 version: 0.1.0
 author: KI-Servicezentrum Berlin-Brandenburg
 license: MIT
 metadata:
   hermes:
-    tags: [education, interactive, games, ml-concepts, visualization]
+    tags: [education, interactive, games, animation, manim, ml-concepts, visualization]
 ---
 
-# Teaching Games
+# Teaching Agent
 
 ## Overview
 
-You teach a concept by building a game the user plays, then explaining what they
-just did. The game is a real HTML page generated from one of five engines; you
-supply only the concept-specific content as a JSON object called GAME_DATA.
+You teach a concept two ways, and the first decision is which:
 
-The engines are already written and already correct. You never write HTML,
-CSS, JavaScript, or a formula. Authoring GAME_DATA badly is the only way to
-break this, so read the format guide before you write one.
+- **WATCH** — a Manim animation renders and plays in the chat. Teaches *shape*:
+  the size of a gap, an order, a proportion. Content is a JSON object called
+  SCENE_DATA.
+- **PLAY** — an interactive HTML game opens in the preview rail. Teaches
+  *consequence*: what happens when you choose wrong. Content is a JSON object
+  called GAME_DATA.
+
+Often the answer is **both, watch first**. See the shape, then live inside it.
+
+The engines are already written and already correct — five game engines and one
+animation template. You never write HTML, CSS, JavaScript, Python or a formula.
+Authoring the JSON badly is the only way to break this, so read the relevant
+format guide before you write one.
 
 ## When to Use
 
-- The user invokes `/teaching-games <concept>`
+- The user invokes `/teaching-agent <concept>`
 - The user asks to be taught, shown, or walked through how something works
 - The user asks for a game, demo, or interactive version of a concept
 
@@ -38,18 +46,26 @@ Set these once and reuse them:
 ```bash
 S="${HERMES_SKILL_DIR}"
 G="python3 ${HERMES_SKILL_DIR}/scripts/generate_game.py"
+R="python3 ${HERMES_SKILL_DIR}/scripts/render_scene.py"
 ```
 
-Read `${HERMES_SKILL_DIR}/references/concept_to_template.md` to pick the
-template, and `${HERMES_SKILL_DIR}/references/gamedata_format_guide.md` before
-authoring any GAME_DATA. Both are short. Read them with the `terminal` tool;
-don't work from memory of this file.
+Read these with the `terminal` tool, in this order. Don't work from memory of
+this file.
 
-## Step 1 — Pitch the Game, Then Ask
+1. `references/concept_to_output.md` — **always first.** WATCH, PLAY, or both.
+2. Then, for a game: `references/concept_to_template.md`, then
+   `references/gamedata_format_guide.md`.
+3. Or, for an animation: `references/scenedata_format_guide.md`.
 
-Say in **one or two sentences** what the player will actually *do* — not what
-the concept is. "Tokens fall and you route each one to the right expert before
-it lands" is a pitch. "MoE models use a gating network" is a lecture.
+## Step 1 — Decide the Mode, Pitch It, Then Ask
+
+Read `concept_to_output.md` and decide: WATCH, PLAY, or both. The test is
+whether there is a decision the learner can get wrong — if there is, they should
+play it; if there is only a magnitude to notice, they should watch it.
+
+Then pitch in **one or two sentences** what will actually happen — not what the
+concept is. "You'll see 16 experts fire while the MoE fires 3, then route tokens
+yourself" is a pitch. "MoE models use a gating network" is a lecture.
 
 Then `clarify` with exactly these three:
 
@@ -69,11 +85,47 @@ Then `clarify` with exactly these three:
 Do not build anything before the user picks. Generating a game they did not ask
 for wastes the reveal.
 
-## Step 2 — Build and Serve
+## Step 2a — WATCH: Render the Animation
 
-**Default to `--author`.** It generates the GAME_DATA, retries twice on invalid
-JSON feeding the parser error back each time, and falls back to a cached round
-if all three attempts fail. One call, and it cannot leave you with nothing:
+Skip to Step 2b if this concept is PLAY-only.
+
+```bash
+$R --author "dense vs MoE inference"
+```
+
+One call. It generates SCENE_DATA, retries twice on invalid JSON feeding the
+parser error back, falls back to a cached scene if all three attempts fail, and
+renders 1080p60. Add `--data dense_vs_moe.json` instead of `--author` to use a
+cached scene directly.
+
+**This takes 40–70 seconds** — roughly 30–50 s of generation plus ~15 s of
+rendering. Say what they are about to see *while it runs*, so the wait is the
+narration rather than dead air. Do not announce that you are rendering.
+
+It prints **one line**: a `#media:` marker. Paste it verbatim on its own line
+and say one sentence about what to look for:
+
+```
+[Watch: dense_vs_moe.mp4](#media:%2FUsers%2F…%2Fdense_vs_moe.mp4)
+
+Watch how many nodes light up on each side.
+```
+
+That marker becomes a video player in the chat. **Never retype it** — it carries
+an absolute path, and the app plays only this exact form. Note this is *not* the
+game's `#preview/` marker: video takes a file path, the game takes a loopback
+URL, and swapping them shows the user nothing.
+
+Then stop and let them watch. When they come back, either explain (Step 4) or
+offer the game:
+
+> That's the shape of it. Want to try routing tokens yourself?
+
+## Step 2b — PLAY: Build and Serve
+
+**Default to `--author`.** Same contract as the renderer: generates the
+GAME_DATA, retries twice on invalid JSON feeding the parser error back each
+time, and falls back to a cached round if all three attempts fail:
 
 ```bash
 $G --author "MoE routing" --serve
@@ -161,6 +213,11 @@ actually happened:
   Gaussian mixture over the declared peaks.
 - **"New concept"** — back to Step 1 with the new topic.
 
+If they have only watched, one of the three options must be **"Let me try it"** →
+Step 2b. If they have only played and the concept also has a WATCH mode, offer
+**"Show me the shape"** → Step 2a. Never offer a mode the concept does not have;
+`concept_to_output.md` says which.
+
 ## Step 5 — Make It Harder
 
 Change **the data, never the template**. Load the GAME_DATA you used, adjust it,
@@ -209,10 +266,16 @@ budget or a routing decision all map. Concepts with no interactive core at all
 
 ## Constraints
 
-- **Never write HTML, CSS or JavaScript.** The engines are done. Your entire
-  output surface is one JSON object.
-- **Never invent a URL or preview marker.** Paste the line `--serve` printed,
-  unmodified. Re-encoding it by hand breaks the preview rail.
+- **Never write HTML, CSS, JavaScript or Python.** The engines are done. Your
+  entire output surface is one JSON object.
+- **Decide the mode before the template.** Reaching for a game when the concept
+  has nothing to decide, or an animation when there is no magnitude to see, is
+  the most expensive mistake available — everything after it is wasted.
+- **WATCH before PLAY** when doing both. After playing they already know the
+  shape, so the animation lands on nothing.
+- **Never invent a URL or a marker.** Paste what the tool printed, unmodified.
+  Re-encoding by hand breaks it. The two markers are not interchangeable:
+  `#preview/` + loopback URL for games, `#media:` + absolute path for video.
 - **Never explain the concept before they play.** Steps 1 and 3 are pitch and
   handover; the teaching happens in Step 4.
 - **Never claim a game exists for `race_algorithm` or `build_and_test`.** Every
@@ -268,6 +331,8 @@ budget or a routing decision all map. Concepts with no interactive core at all
 
 ## Verification Checklist
 
+- [ ] Mode chosen from `concept_to_output.md` before anything was built
+- [ ] WATCH came before PLAY when the concept had both
 - [ ] Template chosen from `concept_to_template.md`, not from memory
 - [ ] Format guide read before any GAME_DATA was authored
 - [ ] The pitch described what the player does, in ≤2 sentences

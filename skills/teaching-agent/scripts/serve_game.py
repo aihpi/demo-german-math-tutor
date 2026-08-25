@@ -14,7 +14,7 @@ port moved so the two skills never fight over it.
 import argparse, hashlib, pathlib, socket, subprocess, sys, tempfile, time, urllib.parse
 
 PORT = 8732                                                    # math-tutor holds 8731
-DIR = pathlib.Path(tempfile.gettempdir()) / "teaching-games"
+DIR = pathlib.Path(tempfile.gettempdir()) / "teaching-agent"
 
 
 def serving() -> bool:

@@ -9,7 +9,7 @@ tested_gamedata/ must produce a complete, marker-free HTML file.
 import json, pathlib, re, sys, tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SKILL = ROOT / "skills" / "teaching-games"
+SKILL = ROOT / "skills" / "teaching-agent"
 GD = SKILL / "tested_gamedata"
 sys.path.insert(0, str(SKILL / "scripts"))
 import generate_game as gg  # noqa: E402
@@ -104,6 +104,40 @@ def rejects_bad_input(tmp: pathlib.Path) -> None:
         raise AssertionError("accepted an unknown template name")
 
 
+def scene_side_is_sound() -> None:
+    """The animation half has the same two failure modes as the game half:
+    a manifest pointing at nothing, and a doc that has drifted from the code."""
+    sd = SKILL / "scene_data"
+    index = json.loads((sd / "index.json").read_text())
+    files = {p.name for p in sd.glob("*.json")} - {"index.json"}
+    listed, keys = set(), {}
+    for e in index["entries"]:
+        assert (sd / e["file"]).exists(), f"scene index points at missing {e['file']}"
+        listed.add(e["file"])
+        for m in e["match"]:
+            assert m == m.lower(), f"scene match key {m!r} must be lowercase"
+            assert m not in keys, f"scene match key {m!r} claimed twice"
+            keys[m] = e["file"]
+    assert files == listed, f"scene_data out of sync with its index: {files ^ listed}"
+
+    templates = {p.stem for p in (SKILL / "manim_templates").glob("*.py")}
+    for e in index["entries"]:
+        assert e["template"] in templates, f"scene index names unknown template {e['template']}"
+
+    guide = (SKILL / "references/scenedata_format_guide.md").read_text()
+    out = (SKILL / "references/concept_to_output.md").read_text()
+    for t in templates:
+        assert t in guide, f"scenedata_format_guide.md never documents {t}"
+        assert t in out, f"concept_to_output.md never mentions {t}"
+
+    # Every SCENE_DATA must survive the renderer's own validator.
+    sys.path.insert(0, str(SKILL / "scripts"))
+    import render_scene as rs
+    for f in sorted(files):
+        rs.validate("comparison_split", json.loads((sd / f).read_text()))
+    print(f"  ok  scene side: {len(files)} scenes, {len(keys)} match keys, all validate")
+
+
 def docs_match_reality() -> None:
     """No document may describe a template that exists as missing.
 
@@ -153,5 +187,6 @@ if __name__ == "__main__":
         build_all(tmp)
         rejects_bad_input(tmp)
         cache_manifest_is_sound()
+        scene_side_is_sound()
         docs_match_reality()
     print("\nall template builds passed")

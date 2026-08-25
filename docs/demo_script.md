@@ -111,7 +111,7 @@ then silently serves a cached round. Provenance goes to **stderr only**, so a
 fallback looks identical on stage:
 
 ```bash
-python3 skills/teaching-games/scripts/generate_game.py --author "MoE routing" --serve
+python3 skills/teaching-agent/scripts/generate_game.py --author "MoE routing" --serve
 ```
 
 All three demo concepts resolve to a cached round, so **the demo survives the
