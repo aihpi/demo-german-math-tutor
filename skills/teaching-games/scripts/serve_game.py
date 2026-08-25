@@ -1,61 +1,75 @@
 #!/usr/bin/env python3
-"""Serve the directory holding a generated game over localhost.
+"""Publish a generated game on loopback http, and hand back its URL.
 
-    serve_game.py                      # serves /tmp, prints http://127.0.0.1:8080/game.html
-    serve_game.py --file /tmp/game.html --port 8080
+    serve_game.py --file /tmp/game.html          # -> http://127.0.0.1:8732/<hash>.html
 
-Idempotent: if something is already listening on the port, this assumes it is a
-previous instance of this server and just prints the URL. Pass --restart to kill
-whatever holds the port and take it over.
+Also importable:  from serve_game import publish; url = publish(html_text)
+
+Why http and not a file:// path or a data: URI — the desktop app's renderer
+rejects data: URIs and its hermes-media:// scheme carries audio/video only, so a
+loopback origin is the only way anything renders inline. Same conclusion the
+math-tutor skill reached for its SVG figures; this is that mechanism with the
+port moved so the two skills never fight over it.
 """
-import argparse, http.server, functools, os, pathlib, signal, socket, subprocess, sys, threading
+import argparse, hashlib, pathlib, socket, subprocess, sys, tempfile, time
+
+PORT = 8732                                                    # math-tutor holds 8731
+DIR = pathlib.Path(tempfile.gettempdir()) / "teaching-games"
 
 
-def port_busy(port: int) -> bool:
-    with socket.socket() as s:
-        s.settimeout(0.4)
-        return s.connect_ex(("127.0.0.1", port)) == 0
+def serving() -> bool:
+    with socket.socket() as sock:
+        sock.settimeout(0.3)
+        return sock.connect_ex(("127.0.0.1", PORT)) == 0
 
 
-def free_port(port: int) -> None:
-    """Kill whatever is listening. Only reachable via --restart."""
-    try:
-        pids = subprocess.run(["lsof", "-ti", f"tcp:{port}"], capture_output=True, text=True).stdout.split()
-    except FileNotFoundError:
-        print("lsof not available; cannot free the port automatically", file=sys.stderr)
+def ensure_server() -> None:
+    """Start the static server if it isn't already up, detached from this process.
+
+    start_new_session keeps it alive after the calling shell exits — the agent's
+    terminal tool must be able to return, so this can never block or be a child
+    that dies with the command.
+    """
+    if serving():
         return
-    for pid in pids:
-        os.kill(int(pid), signal.SIGTERM)
+    DIR.mkdir(exist_ok=True)
+    # ponytail: stdlib http.server, single-threaded. It serves one HTML file per
+    # round to one localhost viewer; swap it if that ever stops being true.
+    subprocess.Popen(
+        [sys.executable, "-m", "http.server", str(PORT),
+         "--bind", "127.0.0.1", "--directory", str(DIR)],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    for _ in range(40):                                        # ~4s, plenty for a local bind
+        if serving():
+            return
+        time.sleep(0.1)
+    raise RuntimeError(f"could not bring up the game server on port {PORT}")
+
+
+def publish(html: str) -> str:
+    """Write the page under a content-hashed name and return its URL.
+
+    Hashing the content means "make it harder" always produces a NEW url, so the
+    preview rail can never show a cached copy of the previous round.
+    """
+    DIR.mkdir(exist_ok=True)
+    name = f"{hashlib.sha1(html.encode()).hexdigest()[:12]}.html"
+    (DIR / name).write_text(html)
+    ensure_server()
+    return f"http://127.0.0.1:{PORT}/{name}"
 
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--file", default="/tmp/game.html", help="the generated game to link to")
-    p.add_argument("--port", type=int, default=8080)
-    p.add_argument("--restart", action="store_true", help="kill an existing listener and take the port")
-    p.add_argument("--foreground", action="store_true", help="block instead of detaching into a daemon thread")
+    p.add_argument("--file", default="/tmp/game.html", help="the generated game to publish")
     a = p.parse_args()
-
-    game = pathlib.Path(a.file).resolve()
-    if not game.exists():
-        print(f"{game} does not exist — run generate_game.py first", file=sys.stderr)
+    src = pathlib.Path(a.file)
+    if not src.exists():
+        print(f"{src} does not exist — run generate_game.py first", file=sys.stderr)
         return 2
-
-    url = f"http://127.0.0.1:{a.port}/{game.name}"
-    if port_busy(a.port):
-        if not a.restart:
-            # Re-serving the same directory, so an existing server already works.
-            print(url)
-            return 0
-        free_port(a.port)
-
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(game.parent))
-    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", a.port), handler)
-    print(url, flush=True)
-    if a.foreground:
-        httpd.serve_forever()
-    else:
-        threading.Thread(target=httpd.serve_forever, daemon=False).start()
+    print(publish(src.read_text()))
     return 0
 
 

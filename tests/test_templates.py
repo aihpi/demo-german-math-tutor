@@ -9,7 +9,9 @@ tested_gamedata/ must produce a complete, marker-free HTML file.
 import json, pathlib, sys, tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "skills" / "teaching-games" / "scripts"))
+SKILL = ROOT / "skills" / "teaching-games"
+GD = SKILL / "tested_gamedata"
+sys.path.insert(0, str(SKILL / "scripts"))
 import generate_game as gg  # noqa: E402
 
 # Which template each tested GAME_DATA belongs to.
@@ -25,11 +27,11 @@ CASES = {
 
 
 def build_all(tmp: pathlib.Path) -> None:
-    seen = {p.stem for p in (ROOT / "tested_gamedata").glob("*.json")}
+    seen = {p.stem for p in (GD).glob("*.json")}
     assert seen == set(CASES), f"CASES out of sync with tested_gamedata/: {seen ^ set(CASES)}"
 
     for stem, template in CASES.items():
-        data = json.loads((ROOT / "tested_gamedata" / f"{stem}.json").read_text())
+        data = json.loads((GD / f"{stem}.json").read_text())
         out = gg.build(template, data, tmp / f"{stem}.html")
         html = out.read_text()
 

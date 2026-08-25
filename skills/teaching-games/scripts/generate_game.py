@@ -64,6 +64,8 @@ def main() -> int:
     g.add_argument("--game-data", help="GAME_DATA as a JSON string")
     g.add_argument("--game-data-file", help="path to a .json file")
     p.add_argument("--out", default="/tmp/game.html")
+    p.add_argument("--serve", action="store_true",
+                   help="also publish on loopback http and print the URL instead of the path")
     a = p.parse_args()
 
     raw = pathlib.Path(a.game_data_file).read_text() if a.game_data_file else a.game_data
@@ -74,7 +76,12 @@ def main() -> int:
         print(f"invalid JSON at line {e.lineno} col {e.colno}: {e.msg}", file=sys.stderr)
         return 2
     try:
-        print(build(a.template, data, pathlib.Path(a.out)))
+        out = build(a.template, data, pathlib.Path(a.out))
+        if a.serve:
+            from serve_game import publish          # same server the figures use, different port
+            print(publish(out.read_text()))
+        else:
+            print(out)
     except (ValueError, FileNotFoundError) as e:
         print(str(e), file=sys.stderr)
         return 2
