@@ -213,37 +213,49 @@ budget or a routing decision all map. Concepts with no interactive core at all
   and never both.
 - Never narrate the machinery: no "let me generate", no "calling the script",
   no mention of GAME_DATA, templates or this skill.
+- **Never think out loud in the message.** Planning — "Step 1 asks for a pitch",
+  "according to concept_to_template.md", "I will now run" — is not for the user.
+  Your message contains only what you would say to a person: the pitch, the two
+  output lines, the one sentence of controls, the explanation. Nothing about how
+  you got there.
+- **Write every user-facing sentence in the language the user wrote in.** If
+  they ask in English, answer in English, and check each turn — drifting into
+  another language mid-session is a bug the user sees immediately.
 
 ## Common Pitfalls
 
-1. **Pitching the concept instead of the mechanic.** "You'll learn how MoE
+1. **Leaking your planning into the message.** "Vou executar agora", "following
+   Step 1 of the skill", "the cached file is precision_recall.json" — none of
+   this is for the user, and it has already happened in a drifted language.
+   Write the message, not the plan for the message.
+2. **Pitching the concept instead of the mechanic.** "You'll learn how MoE
    routing works" tells them nothing about what they are about to do.
-2. **Explaining before they play.** The insight text is written to land after
+3. **Explaining before they play.** The insight text is written to land after
    the game. Saying it first is the single most expensive mistake here.
-3. **Authoring GAME_DATA from memory of this file.** Read the format guide. The
+4. **Authoring GAME_DATA from memory of this file.** Read the format guide. The
    placeholder names and required fields are exact.
-4. **Rewriting or dropping either output line.** `[Open the game](http://…)`
+5. **Rewriting or dropping either output line.** `[Open the game](http://…)`
    never opens the rail, and posting only the `#preview/` line leaves a blank
    message on any surface without one. Paste both lines exactly as printed.
-5. **Using a placeholder the engine doesn't fill.** It renders as literal
+6. **Using a placeholder the engine doesn't fill.** It renders as literal
    `{braces}` on screen. Each template's list is in the format guide.
-6. **`temp` left at 1 in `predict_and_verify`.** The distribution comes out
+7. **`temp` left at 1 in `predict_and_verify`.** The distribution comes out
    nearly flat and the game teaches nothing. 6–7 for unit-ish vectors.
-7. **A single `quad` landscape in `parameter_control`.** It converges from
+8. **A single `quad` landscape in `parameter_control`.** It converges from
    everywhere, so "where you start matters" never shows. Add a `sin`.
-8. **Claiming precision/recall or exploration/exploitation has no game.** Both
+9. **Claiming precision/recall or exploration/exploitation has no game.** Both
    are built — `balance_tradeoff` and `explore_grid`, each with cached GAME_DATA.
-9. **Separable classes in `balance_tradeoff`.** If every positive scores above
+10. **Separable classes in `balance_tradeoff`.** If every positive scores above
    every negative, a perfect threshold exists and the game disproves its own
    lesson. At least one negative must outrank a positive.
-10. **One peak in `explore_grid`.** With nothing to be lured by, there is no
+11. **One peak in `explore_grid`.** With nothing to be lured by, there is no
    exploration dilemma and every playthrough "finds the optimum".
-11. **Fewer than 3 destinations in `route_and_sort`.** The compute-saving
+12. **Fewer than 3 destinations in `route_and_sort`.** The compute-saving
    arithmetic only reads as a saving with enough destinations — use 6–8 when the
    point is efficiency.
-12. **Switching templates to dodge a validation error.** Read stderr; it names
+13. **Switching templates to dodge a validation error.** Read stderr; it names
    the field.
-13. **Rebuilding by editing the template.** Difficulty lives in the data.
+14. **Rebuilding by editing the template.** Difficulty lives in the data.
 
 ## Verification Checklist
 
@@ -253,6 +265,8 @@ budget or a routing decision all map. Concepts with no interactive core at all
 - [ ] `clarify` offered the three options; nothing was built before they picked
 - [ ] A cached GAME_DATA was used when one matched the topic
 - [ ] Both lines from `--serve` were pasted verbatim, neither reworded
+- [ ] The message contained no planning, no step numbers, no file names
+- [ ] Every sentence was in the language the user wrote in
 - [ ] No part of the concept was explained before they played
 - [ ] Follow-up `clarify` came after play, not instead of it
 - [ ] "Make it harder" changed data only, and produced a new URL

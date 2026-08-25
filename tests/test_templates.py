@@ -113,6 +113,17 @@ def docs_match_reality() -> None:
             assert t in docs[name], f"{name} never mentions the built template '{t}'"
     print("  ok  every built template appears in both reference docs")
 
+    # A stale count is the same drift wearing different clothes: "Three engines
+    # exist" survived the template-name check because no name sits next to it.
+    words = {3: "three", 4: "four", 5: "five", 6: "six", 7: "seven"}
+    for name, text in docs.items():
+        for m in re.finditer(r"(\w+) (?:game )?engines?\b", text, re.I):
+            said = m.group(1).lower()
+            if said in words.values():
+                assert said == words[len(built)], (
+                    f"{name} says '{m.group(0)}' but {len(built)} templates exist")
+    print(f"  ok  no doc states a stale engine count ({len(built)} built)")
+
 
 if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as d:
