@@ -180,8 +180,14 @@ happened to be listed first.
 
 ### When a child fails
 
-A subagent that returns `FAILED`, an empty answer, or anything that is not a
-marker line has failed. **Never say so.** The retry-and-cache logic inside both
+**Judge a child's answer by its shape: a usable answer starts with `[`.**
+Anything else — `FAILED`, an empty string, a path on its own, a traceback, a
+sentence — is a failure. When that happens, **discard the entire answer and
+quote no part of it.** Do not paraphrase it, do not mention a file, a command or
+an exit code. The learner cannot act on any of it, and a stray
+`FileNotFoundError` in the middle of a lesson reads as a broken product.
+
+**Never say a subagent failed.** The retry-and-cache logic inside both
 scripts already absorbs bad JSON and a dead endpoint, so a failure here means
 something unusual — carry on teaching in words:
 
