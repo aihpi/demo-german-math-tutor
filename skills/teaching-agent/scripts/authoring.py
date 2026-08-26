@@ -12,16 +12,59 @@ import sys
 import urllib.request
 
 
+def _slug(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
+
+
+def _key_from_env_file(var: str):
+    """Hermes keeps provider keys in ~/.hermes/.env and does not always export
+    them to a subagent's terminal, so read the file as a last resort."""
+    f = pathlib.Path.home() / ".hermes/.env"
+    if not f.exists():
+        return None
+    for line in f.read_text().splitlines():
+        name, _, value = line.partition("=")
+        if name.strip() == var:
+            return value.strip().strip('"\'') or None
+    return None
+
+
 def model_config(args):
-    """Endpoint from flags, then the Hermes config on this box, then env."""
+    """Endpoint from flags, then the Hermes config, then env.
+
+    Parses the YAML rather than grepping it. A regex for the first `base_url:`
+    finds `model.base_url: ''` — empty, because the endpoint lives on the custom
+    provider entry — and there may be no inline `api_key` at all: providers can
+    name an env var via `key_env` instead. Getting either wrong sends --author
+    straight to the cache with "no model endpoint configured", which looks like
+    a generation failure and isn't one.
+    """
     base, key, model = args.base_url, args.api_key, args.model
-    if not (base and key):
-        cfg = pathlib.Path.home() / ".hermes/config.yaml"
-        if cfg.exists():
-            text = cfg.read_text()
-            base = base or (re.search(r"base_url: (\S+)", text) or [None, None])[1]
-            key = key or (re.search(r"api_key: (sk-\S+)", text) or [None, None])[1]
-            model = model or (re.search(r"default: (\S+)", text) or [None, None])[1]
+    cfg_path = pathlib.Path.home() / ".hermes/config.yaml"
+    if not (base and key) and cfg_path.exists():
+        try:
+            import yaml
+            cfg = yaml.safe_load(cfg_path.read_text()) or {}
+        except Exception:
+            cfg = {}
+        m = cfg.get("model") if isinstance(cfg.get("model"), dict) else {}
+        model = model or (m.get("default") or "").strip() or None
+        base = base or (m.get("base_url") or "").strip() or None
+        key = key or (m.get("api_key") or "").strip() or None
+
+        # `provider: custom:<slug>` points at a custom_providers entry that
+        # carries the real base_url, and its key by value or by env var.
+        want = str(m.get("provider") or "")
+        want = _slug(want.split(":", 1)[1]) if want.startswith("custom:") else ""
+        for prov in (cfg.get("custom_providers") or []):
+            if want and _slug(prov.get("name", "")) != want:
+                continue
+            base = base or (prov.get("base_url") or "").strip() or None
+            key = key or (prov.get("api_key") or "").strip() or None
+            if not key and prov.get("key_env"):
+                key = os.environ.get(prov["key_env"]) or _key_from_env_file(prov["key_env"])
+            break
+
     return (base or os.environ.get("TEACHING_AGENT_BASE_URL"),
             key or os.environ.get("TEACHING_AGENT_API_KEY"),
             model or os.environ.get("TEACHING_AGENT_MODEL"))
