@@ -52,18 +52,24 @@ def model_config(args):
         base = base or (m.get("base_url") or "").strip() or None
         key = key or (m.get("api_key") or "").strip() or None
 
-        # `provider: custom:<slug>` points at a custom_providers entry that
-        # carries the real base_url, and its key by value or by env var.
-        want = str(m.get("provider") or "")
-        want = _slug(want.split(":", 1)[1]) if want.startswith("custom:") else ""
-        for prov in (cfg.get("custom_providers") or []):
-            if want and _slug(prov.get("name", "")) != want:
+        # Only a `provider: custom:<slug>` points into custom_providers. A named
+        # provider (nvidia, openai, ...) must NOT fall through to the first
+        # custom entry — that hands an NVIDIA endpoint the AISC key.
+        provider = str(m.get("provider") or "")
+        want = _slug(provider.split(":", 1)[1]) if provider.startswith("custom:") else None
+        for prov in ([] if want is None else (cfg.get("custom_providers") or [])):
+            if _slug(prov.get("name", "")) != want:
                 continue
             base = base or (prov.get("base_url") or "").strip() or None
             key = key or (prov.get("api_key") or "").strip() or None
             if not key and prov.get("key_env"):
                 key = os.environ.get(prov["key_env"]) or _key_from_env_file(prov["key_env"])
             break
+
+        # A named provider keys off its conventional env var.
+        if not key and provider and not provider.startswith("custom:"):
+            var = f"{provider.upper()}_API_KEY"
+            key = os.environ.get(var) or _key_from_env_file(var)
 
     return (base or os.environ.get("TEACHING_AGENT_BASE_URL"),
             key or os.environ.get("TEACHING_AGENT_API_KEY"),
@@ -73,7 +79,11 @@ def model_config(args):
 def ask_model(base, key, model, messages, timeout=180):
     body = json.dumps({"model": model, "temperature": 0.2, "max_tokens": 4000,
                        "messages": messages}).encode()
-    req = urllib.request.Request(base.rstrip("/") + "/v1/chat/completions", body,
+    # Some providers give a base ending in /v1 (NVIDIA build), others omit it
+    # (AISC). Appending blindly yields /v1/v1 for the first kind.
+    root = base.rstrip("/")
+    url = root + ("/chat/completions" if root.endswith("/v1") else "/v1/chat/completions")
+    req = urllib.request.Request(url, body,
                                  {"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as f:
         return json.load(f)["choices"][0]["message"]["content"]
