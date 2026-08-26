@@ -71,8 +71,19 @@ is whether there is a decision the learner can get wrong — if there is, they
 should play it; if there is only a magnitude to notice, they should watch it.
 
 Then pitch in **one or two sentences** what will actually happen — not what the
-concept is. "You'll see 16 experts fire while the MoE fires 3, then route tokens
-yourself" is a pitch. "MoE models use a gating network" is a lecture.
+concept is. **Begin with the literal words "You'll "** and continue from there:
+
+> **You'll** see 16 experts fire while the MoE fires only 3, then route tokens yourself.
+
+"MoE models use a gating network" is a lecture, not a pitch. The fixed opening is
+not styling — starting a sentence in a specific language keeps the rest of it in
+that language, and this model occasionally drifts mid-sentence into Spanish,
+Portuguese or Korean when it starts a paragraph free-form. Anchor the first two
+words and the drift has nowhere to begin.
+
+Everything you write to the learner is in the language they wrote in. If they
+wrote English, every sentence is English — including the one you are part-way
+through.
 
 Then `clarify` with exactly these three:
 
