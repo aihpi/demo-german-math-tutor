@@ -49,13 +49,15 @@ G="python3 ${HERMES_SKILL_DIR}/scripts/generate_game.py"
 R="python3 ${HERMES_SKILL_DIR}/scripts/render_scene.py"
 ```
 
-Read these with the `terminal` tool, in this order. Don't work from memory of
-this file.
+Read these two with the `terminal` tool, and nothing else:
 
 1. `references/concept_to_output.md` — **always first.** WATCH, PLAY, or both.
-2. Then, for a game: `references/concept_to_template.md`, then
-   `references/gamedata_format_guide.md`.
-3. Or, for an animation: `references/scenedata_format_guide.md`.
+2. `references/concept_to_template.md` — which game engine, if it is a PLAY.
+
+**Do not read the format guides.** `--author` hands
+`gamedata_format_guide.md` / `scenedata_format_guide.md` to the model itself, so
+reading them here spends ~22 KB of context on something you never use. Open one
+only if you are hand-authoring JSON (Step 2b, second branch), which is rare.
 
 ## Step 1 — Decide the Mode, Pitch It, Then Ask
 
@@ -133,9 +135,11 @@ You are the TEACHER. You talk to the learner, offer choices, and present content
 as it arrives. Content creation goes to subagents via `delegate_task`, which
 keeps their tool noise out of this conversation.
 
-**`delegate_task` blocks until every child finishes.** You cannot speak between
-delegating and receiving results — the whole batch returns at once. So the order
-is: **teach first, then delegate, then present.**
+**`delegate_task` does not return until every child finishes.** You cannot speak
+between delegating and receiving results — the whole batch arrives at once. So
+the order is: **teach first, then delegate, then present.** (Measured on Hermes
+0.20.5: a single 45-second child held the turn for 73 s and came back with its
+result already complete.)
 
 ### One call, both jobs
 
@@ -165,8 +169,9 @@ prose the app will not render.
 
 Three things that will break it if you change them:
 
-- **Subagents have no `execute_code`** — it is blocked for children. They must use
-  the `terminal` tool. Telling one to write a script wastes the delegation.
+- **Give the child a `terminal` command, not a program to write.** Both scripts
+  are CLIs; a child that reasons about writing code instead of running one line
+  wastes the delegation.
 - **Ask for the printed line verbatim, not a path or a URL.** The scripts already
   emit correctly-encoded markers. A subagent that hands you a bare path, or a
   parent that re-encodes one, produces a marker the app silently ignores.
