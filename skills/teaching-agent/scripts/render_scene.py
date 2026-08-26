@@ -19,7 +19,8 @@ import sys
 import tempfile
 import time
 import urllib.parse
-import urllib.request
+
+import authoring
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TEMPLATES, SCENE_DATA = ROOT / "manim_templates", ROOT / "scene_data"
@@ -82,89 +83,15 @@ def validate(template: str, data) -> None:
             raise ValueError(f"{template}: {side}.metric.value must be a number")
 
 
-# ---------------------------------------------------------------- authoring --
-def cached_for(concept: str):
-    index = SCENE_DATA / "index.json"
-    if not index.exists():
-        return None
-    needle = concept.lower()
-    for e in json.loads(index.read_text())["entries"]:
-        if any(m in needle for m in e["match"]):
-            path = SCENE_DATA / e["file"]
-            if path.exists():
-                return e["template"], json.loads(path.read_text()), e["file"]
-    return None
-
-
-def model_config(args):
-    base, key, model = args.base_url, args.api_key, args.model
-    if not (base and key):
-        cfg = pathlib.Path.home() / ".hermes/config.yaml"
-        if cfg.exists():
-            text = cfg.read_text()
-            base = base or (re.search(r"base_url: (\S+)", text) or [None, None])[1]
-            key = key or (re.search(r"api_key: (sk-\S+)", text) or [None, None])[1]
-            model = model or (re.search(r"default: (\S+)", text) or [None, None])[1]
-    return (base or os.environ.get("TEACHING_GAMES_BASE_URL"),
-            key or os.environ.get("TEACHING_GAMES_API_KEY"),
-            model or os.environ.get("TEACHING_GAMES_MODEL"))
-
-
-def ask_model(base, key, model, messages, timeout=180):
-    body = json.dumps({"model": model, "temperature": 0.2, "max_tokens": 2500,
-                       "messages": messages}).encode()
-    req = urllib.request.Request(base.rstrip("/") + "/v1/chat/completions", body,
-                                 {"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as f:
-        return json.load(f)["choices"][0]["message"]["content"]
-
-
 def author(concept: str, template: str, retries: int, args):
-    """Same shape as generate_game.py --author: retry with the exact error, then cache.
-
-    A model that has just emitted broken JSON is the least reliable thing to ask
-    for a correction, so the retry is deterministic and lives here rather than in
-    the agent loop.
-    """
-    base, key, model = model_config(args)
     guide = (ROOT / "references/scenedata_format_guide.md").read_text()
-    system = (guide + "\n\nReply with ONE JSON object and nothing else — the SCENE_DATA itself, "
-                      "with no wrapper key.")
-    messages = [{"role": "system", "content": system},
-                {"role": "user", "content": f"Make a comparison animation for: {concept}"}]
-    last = "no attempt made"
-
-    if base and key and model:
-        for attempt in range(retries + 1):
-            raw = ""
-            try:
-                raw = ask_model(base, key, model, messages)
-                blob = re.search(r"\{.*\}", raw, re.S)
-                if not blob:
-                    raise ValueError("no JSON object in the reply")
-                data = json.loads(blob.group(0))
-                validate(template, data)
-                return data, f"model (attempt {attempt + 1})"
-            except Exception as e:  # noqa: BLE001 — any failure is a retry
-                last = f"{type(e).__name__}: {e}"
-                print(f"authoring attempt {attempt + 1} failed: {last}", file=sys.stderr)
-                if attempt == retries:
-                    break
-                messages += [
-                    {"role": "assistant", "content": raw},
-                    {"role": "user", "content": f"Your JSON was invalid: {last}. "
-                                                "Fix it and return only valid JSON."},
-                ]
-    else:
-        last = "no model endpoint configured"
-        print(f"skipping live authoring: {last}", file=sys.stderr)
-
-    fallback = cached_for(concept)
-    if not fallback:
-        raise ValueError(f"live authoring failed ({last}) and no cached scene matches '{concept}'")
-    _, data, name = fallback
-    print(f"falling back to cached {name} after {retries + 1} attempts", file=sys.stderr)
-    return data, f"cache ({name})"
+    _, data, how = authoring.author(
+        concept, template, retries, args,
+        guide=guide + "\n\nReply with ONE JSON object and nothing else — the SCENE_DATA "
+                      "itself, with no wrapper key.",
+        validate=validate, cache_dir=SCENE_DATA,
+        ask=lambda c, t: f"Make a comparison animation for: {c}")
+    return data, how
 
 
 def media_marker(path: pathlib.Path) -> str:
@@ -187,9 +114,6 @@ def main() -> int:
     p.add_argument("--quality", default="h", choices=sorted(QUALITY),
                    help="l=480p15 m=720p30 h=1080p60 (default) p=1440p60 k=2160p60")
     p.add_argument("--retries", type=int, default=2)
-    p.add_argument("--scene", help="scene class name; inferred from the template if omitted")
-    p.add_argument("--out-name", help="basename for the rendered file (default: the scene class)")
-    p.add_argument("--verbose", action="store_true", help="also print render time, size and duration")
     p.add_argument("--model"), p.add_argument("--base-url"), p.add_argument("--api-key")
     a = p.parse_args()
 
@@ -218,7 +142,7 @@ def main() -> int:
         slug = data_path.stem
 
     scenes = scene_names(template)
-    scene = a.scene or (scenes[0] if scenes else None)
+    scene = scenes[0] if scenes else None
     if not scene:
         sys.exit(f"{template.name} defines no Scene subclass")
 
@@ -241,16 +165,12 @@ def main() -> int:
 
     # Rename per concept so a second render never overwrites the first — the
     # agent may hand back two animations in one session.
-    final = out.with_name(f"{a.out_name or slug}.mp4")
+    final = out.with_name(f"{slug}.mp4")
     out.replace(final)
     final = final.resolve()
 
     print(media_marker(final))
     print(f"rendered in {elapsed:.1f}s -> {final} ({final.stat().st_size / 1024:.0f} KB)", file=sys.stderr)
-    if a.verbose:
-        dur = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
-                              "-of", "csv=p=0", str(final)], capture_output=True, text=True).stdout.strip()
-        print(f"  quality {QUALITY[a.quality]}  duration {float(dur):.1f}s" if dur else "", file=sys.stderr)
     return 0
 
 

@@ -116,9 +116,7 @@ the terms and differentiates them analytically, so the gradient shown is exact.
 | `const` | `c` | `c` |
 | `lin` | `m` | `m·x` |
 | `quad` | `a` | `a·x²` |
-| `cubic` | `a` | `a·x³` |
 | `sin` | `amp`, `freq`, `phase?` | `amp·sin(freq·x + phase)` |
-| `cos` | `amp`, `freq`, `phase?` | `amp·cos(freq·x + phase)` |
 
 Any other `type` throws on load and the page stays blank. 
 
@@ -235,8 +233,7 @@ threshold exists with a perfect score and the game teaches the opposite of its
 own lesson. At least one negative must outrank a positive. 12–16 items.
 
 **B. Two declared curves (`curves`).** No items, no classifier. Both curves use
-the same term vocabulary as `parameter_control`, plus `exp` (`amp`, `rate`) and
-`inv` (`a`, `shift`).
+the same term vocabulary as `parameter_control`, plus `exp` (`amp`, `rate`).
 
 ```json
 {

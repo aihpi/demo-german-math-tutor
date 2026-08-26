@@ -11,7 +11,6 @@ import json
 import os
 import pathlib
 import random
-import re
 
 from manim import *  # noqa: F403 — manim's own idiom, matches the repo's other scenes
 
@@ -89,9 +88,6 @@ def active_indices(spec):
 
 # ----------------------------------------------------------------------- animation
 LAG = {"stagger": 0.14, "sequential": 1.0, "simultaneous": 0.0}
-# A lag_ratio=0 group stretched over the whole window is one sluggish swell; let
-# `simultaneous` finish early and hold, so the counters stay the moving thing.
-BUSY = {"stagger": 1.0, "sequential": 1.0, "simultaneous": 0.55}
 
 
 def pulse(node, colour, glow):
@@ -119,8 +115,9 @@ def side_animation(nodes, spec, colour, rng):
     if not anims:                               # active: 0 — LaggedStart would raise
         return Wait(run_time=0.01)
     body = LaggedStart(*anims, lag_ratio=LAG.get(pattern, 0.14))
-    busy = BUSY.get(pattern, 1.0)
-    return body if busy >= 1.0 else Succession(body, Wait(run_time=(1 / busy - 1)))
+    # lag_ratio=0 stretched over the whole window is one sluggish swell: let it
+    # brighten in ~55% of the time and hold, so the counters stay the moving thing.
+    return Succession(body, Wait(run_time=0.8)) if pattern == "simultaneous" else body
 
 
 def ratio_text(label, left, right):

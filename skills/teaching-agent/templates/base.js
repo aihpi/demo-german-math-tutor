@@ -22,8 +22,8 @@ const TG = (() => {
                            { min: 0,  emoji: "🌱", label: "Just getting started!" }],
                  shareText: "", showReplayButton: true, showNewConceptButton: false },
     animations: { speed: "normal", transitions: "slide", itemEntrance: "drop", celebrationIntensity: 3 },
-    layout: { canvasWidth: 700, canvasHeight: 450, orientation: "landscape", mobileOptimized: true },
-    multiplayer: { enabled: false, mode: "competitive", showLeaderboard: true,
+    layout: { mobileOptimized: true },
+    multiplayer: { enabled: false, showLeaderboard: true,
                    players: [], playerColors: ["#FF7500", "#4A9EFF", "#50C878", "#FF4444", "#FFD700"] },
   };
 
@@ -174,19 +174,17 @@ const TG = (() => {
      author never writes a formula and the derivative stays exact. */
   const TERM = {
     const: t => t.c,                                   lin:  (t, x) => t.m * x,
-    quad:  (t, x) => t.a * x * x,                      cubic:(t, x) => t.a * x * x * x,
+    quad:  (t, x) => t.a * x * x,
+    cubic:(t, x) => t.a * x * x * x,
     sin:   (t, x) => t.amp * Math.sin(t.freq * x + (t.phase || 0)),
-    cos:   (t, x) => t.amp * Math.cos(t.freq * x + (t.phase || 0)),
     exp:   (t, x) => t.amp * Math.exp(t.rate * x),
-    inv:   (t, x) => t.a / (x + (t.shift ?? 1)),
   };
   const DTERM = {
     const: () => 0,                                    lin:  t => t.m,
-    quad:  (t, x) => 2 * t.a * x,                      cubic:(t, x) => 3 * t.a * x * x,
+    quad:  (t, x) => 2 * t.a * x,
+    cubic:(t, x) => 3 * t.a * x * x,
     sin:   (t, x) => t.amp * t.freq * Math.cos(t.freq * x + (t.phase || 0)),
-    cos:   (t, x) => -t.amp * t.freq * Math.sin(t.freq * x + (t.phase || 0)),
     exp:   (t, x) => t.amp * t.rate * Math.exp(t.rate * x),
-    inv:   (t, x) => -t.a / Math.pow(x + (t.shift ?? 1), 2),
   };
   const curve = terms => {
     const bad = (terms || []).filter(t => !(t.type in TERM)).map(t => t.type);

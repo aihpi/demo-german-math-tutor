@@ -6,10 +6,13 @@
 
 Writes a standalone HTML file (default /tmp/game.html) and prints its path.
 """
-import argparse, json, os, pathlib, re, sys, urllib.request
+import argparse, json, pathlib, re, sys
+
+import authoring
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TEMPLATES = ROOT / "templates"
+GD = ROOT / "tested_gamedata"
 
 # Fields a template's engine reads unconditionally. Anything else has a default.
 REQUIRED = {
@@ -100,106 +103,22 @@ def build(name: str, data, out: pathlib.Path) -> pathlib.Path:
     return out
 
 
-# ---------------------------------------------------------------- authoring --
-# Live GAME_DATA generation with deterministic retries. The retry lives here
-# rather than in the agent loop because a model that just emitted broken JSON is
-# the least reliable thing to ask for a correction — and on stage there is no
-# second chance. Every failure path ends at a cached round that is known to play.
-
-GD = ROOT / "tested_gamedata"
-
-
-def cached_for(concept: str):
-    """(template, data, filename) for the first manifest entry matching `concept`."""
-    index = GD / "index.json"
-    if not index.exists():
-        return None
-    needle = concept.lower()
-    for e in json.loads(index.read_text())["entries"]:
-        if any(m in needle for m in e["match"]):
-            path = GD / e["file"]
-            if path.exists():
-                return e["template"], json.loads(path.read_text()), e["file"]
-    return None
-
-
-def model_config(args):
-    """Endpoint from flags, then env, then the Hermes config already on this box."""
-    base, key, model = args.base_url, args.api_key, args.model
-    if not (base and key):
-        cfg = pathlib.Path.home() / ".hermes/config.yaml"
-        if cfg.exists():
-            text = cfg.read_text()
-            base = base or (re.search(r"base_url: (\S+)", text) or [None, None])[1]
-            key = key or (re.search(r"api_key: (sk-\S+)", text) or [None, None])[1]
-            model = model or (re.search(r"default: (\S+)", text) or [None, None])[1]
-    return (base or os.environ.get("TEACHING_GAMES_BASE_URL"),
-            key or os.environ.get("TEACHING_GAMES_API_KEY"),
-            model or os.environ.get("TEACHING_GAMES_MODEL"))
-
-
-def ask_model(base, key, model, messages, timeout=180):
-    body = json.dumps({"model": model, "temperature": 0.2, "max_tokens": 4000,
-                       "messages": messages}).encode()
-    req = urllib.request.Request(base.rstrip("/") + "/v1/chat/completions", body,
-                                 {"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as f:
-        return json.load(f)["choices"][0]["message"]["content"]
-
-
 def author(concept: str, template: str | None, retries: int, args):
-    """Ask the model for GAME_DATA, retrying with the exact error, then fall back.
-
-    Returns (template, data, provenance). Provenance is reported on stderr only:
-    stdout stays clean so the agent pastes the same thing either way and a
-    fallback never becomes a visible stumble on stage.
-    """
-    base, key, model = model_config(args)
     docs = "\n\n".join((ROOT / f).read_text() for f in
                         ("references/concept_to_template.md", "references/gamedata_format_guide.md"))
-    system = (docs + "\n\nReply with ONE JSON object and nothing else:\n"
-              '{"template": "<name>", "game_data": {...}}')
-    ask = f"Build a teaching game for: {concept}"
-    if template:
-        ask += f"\nUse the {template} template."
 
-    messages = [{"role": "system", "content": system}, {"role": "user", "content": ask}]
-    last = "no attempt made"
+    def unwrap(obj, _requested):
+        picked = obj.get("template") or template
+        if picked in (None, "none"):
+            raise ValueError(f"model declined: {obj.get('reason', 'no reason given')}")
+        return picked, obj["game_data"]
 
-    if base and key and model:
-        for attempt in range(retries + 1):
-            raw = ""
-            try:
-                raw = ask_model(base, key, model, messages)
-                blob = re.search(r"\{.*\}", raw, re.S)
-                if not blob:
-                    raise ValueError("no JSON object in the reply")
-                obj = json.loads(blob.group(0))
-                picked = obj.get("template") or template
-                if picked in (None, "none"):
-                    raise ValueError(f"model declined: {obj.get('reason', 'no reason given')}")
-                validate(picked, obj["game_data"])          # same gate as --game-data-file
-                return picked, obj["game_data"], f"model (attempt {attempt + 1})"
-            except Exception as e:                          # noqa: BLE001 — any failure retries
-                last = f"{type(e).__name__}: {e}"
-                print(f"authoring attempt {attempt + 1} failed: {last}", file=sys.stderr)
-                if attempt == retries:
-                    break
-                messages += [
-                    {"role": "assistant", "content": raw},
-                    {"role": "user", "content": f"Your JSON was invalid: {last}. "
-                                                "Fix it and return only valid JSON."},
-                ]
-    else:
-        last = "no model endpoint configured"
-        print(f"skipping live authoring: {last}", file=sys.stderr)
-
-    fallback = cached_for(concept)
-    if not fallback:
-        raise ValueError(f"live authoring failed ({last}) and no cached round matches '{concept}'")
-    tpl, data, name = fallback
-    print(f"falling back to cached {name} after {retries + 1} attempts", file=sys.stderr)
-    return tpl, data, f"cache ({name})"
+    return authoring.author(
+        concept, template, retries, args,
+        guide=docs + '\n\nReply with ONE JSON object and nothing else:\n'
+                     '{"template": "<name>", "game_data": {...}}',
+        validate=validate, cache_dir=GD, unwrap=unwrap,
+        ask=lambda c, t: f"Build a teaching game for: {c}" + (f"\nUse the {t} template." if t else ""))
 
 
 def main() -> int:
