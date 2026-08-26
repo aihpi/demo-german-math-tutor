@@ -104,6 +104,31 @@ def rejects_bad_input(tmp: pathlib.Path) -> None:
         raise AssertionError("accepted an unknown template name")
 
 
+def skill_does_not_hand_out_copyable_choices() -> None:
+    """SKILL.md must never show clarify choices as a numbered block.
+
+    It did, in a fenced code block, and the agent copied it into its message as
+    plain text instead of calling the clarify tool — so the learner got an
+    unclickable list where the buttons used to be. The rule forbidding it was
+    330 lines away in Constraints; the block was right there. The model follows
+    the nearest concrete shape, so the shape has to go.
+    """
+    # Only inside fenced blocks: a numbered list in prose is an instruction to
+    # the agent, but one in a fence is a template it will copy verbatim.
+    text = (SKILL / "SKILL.md").read_text()
+    offenders, fenced = [], False
+    for ln in text.splitlines():
+        if ln.strip().startswith("```"):
+            fenced = not fenced
+            continue
+        if fenced and re.match(r"^\s*[1-9]\.\s+\S", ln):
+            offenders.append(ln)
+    assert not offenders, ("SKILL.md presents choices as a copyable numbered list, which the "
+                           "agent will paste as text instead of calling clarify:\n    "
+                           + "\n    ".join(offenders[:4]))
+    print("  ok  SKILL.md hands out no copyable choice blocks")
+
+
 def scene_side_is_sound() -> None:
     """The animation half has the same two failure modes as the game half:
     a manifest pointing at nothing, and a doc that has drifted from the code."""
@@ -208,6 +233,7 @@ if __name__ == "__main__":
         build_all(tmp)
         rejects_bad_input(tmp)
         cache_manifest_is_sound()
+        skill_does_not_hand_out_copyable_choices()
         scene_side_is_sound()
         docs_match_reality()
     print("\nall template builds passed")
