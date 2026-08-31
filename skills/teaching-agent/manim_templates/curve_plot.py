@@ -154,18 +154,22 @@ class CurvePlot(Scene):
             steps = int(w.get("steps", 12))
             colour = w.get("color", S["accent"])
 
-            dot = Dot(ax.c2p(x, f(x)), radius=0.13, color=colour, z_index=3)
+            dot = Dot(ax.c2p(x, f(x)), radius=0.13, color=colour, z_index=4)
             trail = VGroup()
             self.play(FadeIn(dot, scale=1.6), run_time=0.35)
 
+            # One mark per visited point, NOT a chord along the curve. A chord
+            # just re-colours the curve and hides the step structure — and the
+            # step structure is the lesson: long strides while the gradient is
+            # steep, then a visible pile-up as it flattens.
             per = max(0.05, T["walkDuration"] / max(1, steps))
             for _ in range(steps):
+                trail.add(Dot(ax.c2p(x, f(x)), radius=0.075, color=colour,
+                              z_index=3).set_opacity(0.55))
                 nx = x - sign * rate * float(df(x))
                 nx = min(max(nx, x0), x1)          # a diverging walker stops at the edge
-                seg = Line(ax.c2p(x, f(x)), ax.c2p(nx, f(nx)),
-                           stroke_width=6, color=colour, z_index=2).set_opacity(0.75)
-                trail.add(seg)
-                self.play(Create(seg), dot.animate.move_to(ax.c2p(nx, f(nx))),
+                self.play(FadeIn(trail[-1], scale=1.4),
+                          dot.animate.move_to(ax.c2p(nx, f(nx))),
                           run_time=per, rate_func=rate_functions.ease_in_out_sine)
                 x = nx
                 if abs(float(df(x))) < 1e-3:       # settled: stop early, hold the rest
