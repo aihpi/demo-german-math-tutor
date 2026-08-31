@@ -34,7 +34,9 @@ QUALITY = {"l": "480p15", "m": "720p30", "h": "1080p60", "p": "1440p60", "k": "2
 # agent's working directory is not ours to depend on.
 MEDIA = pathlib.Path(tempfile.gettempdir()) / "teaching-agent-media"
 
-REQUIRED = {"comparison_split": ["title", "left", "right"]}
+REQUIRED = {"comparison_split": ["title", "left", "right"],
+            "curve_plot":       ["title", "domain", "curves"]}
+CURVE_TERMS = {"const", "lin", "quad", "sin", "cos", "exp", "inv"}
 
 
 def resolve(kind: str, name: str, folder: pathlib.Path, suffix: str) -> pathlib.Path:
@@ -56,6 +58,8 @@ def validate(template: str, data) -> None:
     missing = [k for k in REQUIRED.get(template, []) if k not in data]
     if missing:
         raise ValueError(f"{template}: SCENE_DATA is missing required field(s): {', '.join(missing)}")
+    if template == "curve_plot":
+        return _validate_curve_plot(data)
     for side in ("left", "right"):
         s = data.get(side, {})
         if not isinstance(s, dict) or not s.get("label"):
@@ -81,6 +85,40 @@ def validate(template: str, data) -> None:
                              "stagger, sequential or simultaneous")
         if "metric" in s and not isinstance(s["metric"].get("value", 0), (int, float)):
             raise ValueError(f"{template}: {side}.metric.value must be a number")
+
+
+def _validate_curve_plot(data) -> None:
+    dom = data.get("domain")
+    if not (isinstance(dom, list) and len(dom) == 2 and all(isinstance(v, (int, float)) for v in dom)):
+        raise ValueError("curve_plot: domain must be [min, max], two numbers")
+    if dom[0] >= dom[1]:
+        raise ValueError(f"curve_plot: domain {dom} must go low to high")
+    curves = data.get("curves")
+    if not isinstance(curves, list) or not 1 <= len(curves) <= 3:
+        raise ValueError("curve_plot: needs 1-3 curves, got "
+                         f"{len(curves) if isinstance(curves, list) else type(curves).__name__}")
+    for i, c in enumerate(curves):
+        terms = c.get("terms")
+        if not isinstance(terms, list) or not terms:
+            raise ValueError(f"curve_plot: curves[{i}] needs a non-empty `terms` list")
+        for t in terms:
+            kind = (t or {}).get("type")
+            if kind not in CURVE_TERMS:
+                raise ValueError(f"curve_plot: curves[{i}] has unknown term type {kind!r}; "
+                                 f"use one of {', '.join(sorted(CURVE_TERMS))}")
+    w = data.get("walker")
+    if w is not None:
+        if not isinstance(w, dict):
+            raise ValueError("curve_plot: walker must be an object or omitted")
+        if not (dom[0] <= float(w.get("start", 0)) <= dom[1]):
+            raise ValueError(f"curve_plot: walker.start {w.get('start')} is outside domain {dom}")
+        if float(w.get("rate", 0.1)) <= 0:
+            raise ValueError("curve_plot: walker.rate must be positive")
+        if w.get("direction", "min") not in ("min", "max"):
+            raise ValueError("curve_plot: walker.direction must be 'min' or 'max'")
+    # A flat line with nothing moving on it is not a lesson.
+    if len(curves) == 1 and not w and all(t["type"] == "const" for t in curves[0]["terms"]):
+        raise ValueError("curve_plot: a single constant curve with no walker shows nothing")
 
 
 def author(concept: str, template: str, retries: int, args):

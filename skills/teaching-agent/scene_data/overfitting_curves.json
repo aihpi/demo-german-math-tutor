@@ -1,0 +1,16 @@
+{
+  "title": "Overfitting",
+  "domain": [1, 12],
+  "axes": { "x": "model complexity", "y": "error" },
+  "curves": [
+    { "label": "training error", "color": "#50C878",
+      "terms": [ { "type": "exp", "amp": 9, "rate": -0.42 }, { "type": "const", "c": 0.3 } ] },
+    { "label": "validation error", "color": "#FF4444", "dashed": true,
+      "terms": [ { "type": "exp", "amp": 9, "rate": -0.42 }, { "type": "quad", "a": 0.075 },
+                 { "type": "const", "c": 0.5 } ] }
+  ],
+  "callout": { "show": true, "label": "training error keeps falling — the gap is the overfit",
+               "highlightColor": "#FF7500" },
+  "timing": { "titleDuration": 1.5, "axesDuration": 1.0, "curveDuration": 3.0,
+              "walkDuration": 0, "calloutDuration": 2.5, "endHold": 1.5 }
+}

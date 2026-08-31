@@ -5,8 +5,11 @@ Teaches a concept by rendering an animation to **watch**, generating a game to
 
 Two engines sets, one skill:
 
-- **WATCH** — `manim_templates/comparison_split.py` renders a 1080p60 MP4 from a
-  SCENE_DATA JSON object. Plays inline in the chat via a `#media:` marker.
+- **WATCH** — two Manim templates render a 1080p60 MP4 from a SCENE_DATA JSON
+  object, played inline in the chat via a `#media:` marker.
+  `comparison_split` answers *how many of these versus those*; `curve_plot`
+  answers *what shape does this take over a range* (one curve with a descending
+  walker, or two curves diverging).
 - **PLAY** — five HTML game engines built from a GAME_DATA JSON object. Opens in
   the preview rail via a `#preview/` marker.
 

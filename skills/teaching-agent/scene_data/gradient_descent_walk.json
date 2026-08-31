@@ -1,0 +1,14 @@
+{
+  "title": "Gradient Descent",
+  "domain": [-6, 6],
+  "axes": { "x": "parameter θ", "y": "loss" },
+  "curves": [
+    { "label": "loss surface", "color": "#4A9EFF",
+      "terms": [ { "type": "quad", "a": 0.15 }, { "type": "sin", "amp": 1, "freq": 1.5 } ] }
+  ],
+  "walker": { "start": 5.2, "rate": 0.35, "steps": 14, "direction": "min", "color": "#FF7500" },
+  "callout": { "show": true, "label": "it stops at the nearest valley, not the deepest",
+               "highlightColor": "#FF7500" },
+  "timing": { "titleDuration": 1.5, "axesDuration": 1.0, "curveDuration": 2.0,
+              "walkDuration": 4.0, "calloutDuration": 2.0, "endHold": 1.5 }
+}

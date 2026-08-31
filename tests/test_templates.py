@@ -176,11 +176,13 @@ def scene_side_is_sound() -> None:
         assert t in guide, f"scenedata_format_guide.md never documents {t}"
         assert t in out, f"concept_to_output.md never mentions {t}"
 
-    # Every SCENE_DATA must survive the renderer's own validator.
+    # Every SCENE_DATA must survive the renderer's own validator — against the
+    # template it declares, not a hardcoded one.
     sys.path.insert(0, str(SKILL / "scripts"))
     import render_scene as rs
+    tpl_of = {e["file"]: e["template"] for e in index["entries"]}
     for f in sorted(files):
-        rs.validate("comparison_split", json.loads((sd / f).read_text()))
+        rs.validate(tpl_of[f], json.loads((sd / f).read_text()))
     print(f"  ok  scene side: {len(files)} scenes, {len(keys)} match keys, all validate")
 
 

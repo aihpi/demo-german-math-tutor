@@ -108,6 +108,101 @@ phrase the label to survive that, or avoid a zero metric.
 
 ---
 
+## `curve_plot`
+
+One to three declared curves on shared axes, with an optional marker that walks
+downhill (or up). Use it when the lesson is **a shape over a range** — a descent,
+a divergence, a crossover — rather than a two-way count.
+
+Two shapes, from the same engine:
+
+**A. A walker.** One curve, plus a dot that steps along it by
+`rate × gradient`. For gradient descent, convergence, divergence, getting stuck.
+
+```json
+{
+  "title": "Gradient Descent",
+  "domain": [-6, 6],
+  "axes": { "x": "parameter θ", "y": "loss" },
+  "curves": [
+    { "label": "loss surface", "color": "#4A9EFF",
+      "terms": [ { "type": "quad", "a": 0.15 }, { "type": "sin", "amp": 1, "freq": 1.5 } ] }
+  ],
+  "walker": { "start": 5.2, "rate": 0.35, "steps": 14, "direction": "min", "color": "#FF7500" },
+  "callout": { "show": true, "label": "it stops at the nearest valley, not the deepest" }
+}
+```
+
+**B. Two curves.** No walker. For train-vs-validation, bias vs variance,
+anything where the *gap* is the point.
+
+```json
+{
+  "title": "Overfitting",
+  "domain": [1, 12],
+  "axes": { "x": "model complexity", "y": "error" },
+  "curves": [
+    { "label": "training error", "color": "#50C878",
+      "terms": [ { "type": "exp", "amp": 9, "rate": -0.42 }, { "type": "const", "c": 0.3 } ] },
+    { "label": "validation error", "color": "#FF4444", "dashed": true,
+      "terms": [ { "type": "exp", "amp": 9, "rate": -0.42 }, { "type": "quad", "a": 0.075 },
+                 { "type": "const", "c": 0.5 } ] }
+  ],
+  "callout": { "show": true, "label": "training error keeps falling — the gap is the overfit" }
+}
+```
+
+### Fields
+
+| field | required | notes |
+|---|---|---|
+| `title` | yes | one line, top-centre |
+| `domain` | yes | `[min, max]`, low to high |
+| `curves` | yes | **1–3.** Each needs a non-empty `terms` list |
+| `curves[].label` | no | appears in the legend, top-right |
+| `curves[].color` | no | give contrasting colours; the contrast is the argument |
+| `curves[].dashed` | no | `true` for the "worse" line — it reads as the warning |
+| `axes.x` / `.y` | no | short axis captions |
+| `walker` | no | omit for shape B |
+| `walker.start` | no | must be inside `domain` |
+| `walker.rate` | no | step size × gradient. Too small and it crawls; too big and it flies off |
+| `walker.steps` | no | 10–16. It stops early once the gradient is ~0 |
+| `walker.direction` | no | `min` (default) or `max` for ascent |
+| `callout.label` | no | one short line at the bottom. This is where the lesson goes |
+| `callout.at` | no | an x value to pin the callout near, instead of the bottom |
+
+**No y-range field** — it is computed from the curves, so it always fits.
+
+### Term types
+
+Same vocabulary as `parameter_control`'s landscape, so one guide teaches both:
+
+| type | fields | contributes |
+|---|---|---|
+| `const` | `c` | `c` |
+| `lin` | `m` | `m·x` |
+| `quad` | `a` | `a·x²` |
+| `sin` / `cos` | `amp`, `freq`, `phase?` | `amp·sin(freq·x + phase)` |
+| `exp` | `amp`, `rate` | `amp·e^(rate·x)` |
+| `inv` | `a`, `shift?` | `a / (x + shift)` |
+
+The derivative is worked out analytically from these, so the walker follows the
+true gradient. **You never write a formula.**
+
+### Making it teach something
+
+- **A walker needs more than one valley.** A single `quad` converges from
+  anywhere and shows nothing; add a `sin` so where you start decides where you
+  stop. That is the whole lesson of local minima.
+- **Two curves must actually separate.** If they stay parallel there is no gap
+  to point at. One falling `exp` plus a rising `quad` gives the classic U.
+- **Put the insight in `callout`, not the title.** The title names the concept;
+  the callout says what the picture proves.
+
+Placeholders: none — `curve_plot` text is literal, not templated.
+
+---
+
 ## Common mistakes
 
 | symptom | cause |

@@ -51,12 +51,17 @@ shape.
 |---|---|---|
 | moe routing | 16 experts firing vs 3 | route tokens under time pressure |
 | kv cache | 16 blocks recomputed vs 3 reused | classify what can be reused |
+| gradient descent | a ball settling in the nearest valley | choose the learning rate |
+| overfitting | train and validation error separating | slide model complexity |
 
 **Everything else on this page is single-mode**, however tempting a second mode
-sounds. Precision vs recall is two curves over a slider; gradient descent is a
-ball on a landscape; overfitting is two diverging lines. None of those is two
-grids of dots, and forcing them through `comparison_split` renders a picture
-that contradicts the lesson. They stay PLAY-only until a template fits them.
+sounds. Precision vs recall is two curves over a *slider position*, which
+neither template draws. Forcing a concept through the wrong engine renders a
+picture that contradicts the lesson.
+
+Two animation templates exist and they answer different questions:
+`comparison_split` for **how many of these versus those**, `curve_plot` for
+**what shape does this take over a range**.
 
 **Neither** — history, naming, why a paper mattered, what a library is called.
 Answer in prose. Not everything wants a picture.
@@ -81,30 +86,34 @@ Send them together. Wall time is the slower child (~45 s), not the sum (~60 s).
 |---|---|---|
 | moe routing | `comparison_split` | `route_and_sort` |
 | kv cache | `comparison_split` | `route_and_sort` |
+| gradient descent | `curve_plot` | `parameter_control` |
+| overfitting | `curve_plot` | `balance_tradeoff` |
 
 Only two concepts genuinely have both today, because `comparison_split` is the
 only animation template. Everything else is single-mode.
 
 ### PLAY only — one task
 
-precision vs recall (`balance_tradeoff`) · overfitting (`balance_tradeoff`) ·
-attention (`predict_and_verify`) · next-token probability (`predict_and_verify`) ·
-hyperparameter search (`explore_grid`) · A/B testing (`explore_grid`) ·
-gradient descent (`parameter_control`) · KV cache (`route_and_sort`)
+precision vs recall (`balance_tradeoff`) · attention (`predict_and_verify`) ·
+next-token probability (`predict_and_verify`) · hyperparameter search
+(`explore_grid`) · A/B testing (`explore_grid`)
 
 ### WATCH only — one task
 
-autoregressive vs diffusion decoding · CPU vs GPU cores · quantized vs
-full-precision · batch 1 vs batch 8 · anything that is purely *this against that*
-with no decision in it.
+**`comparison_split`** — autoregressive vs diffusion decoding · CPU vs GPU cores ·
+quantized vs full-precision · batch 1 vs batch 8 · anything that is purely
+*this against that* with no decision in it.
+
+**`curve_plot`** — convergence vs divergence · scaling laws · learning-rate
+schedules · loss curves over training · any *shape over a range*.
 
 ### What does not exist
 
-There is **one** animation template, `comparison_split`. Multi-animation stories
-are not buildable: a concept needing an architecture walkthrough, a denoising
-sequence or a loss-landscape flythrough has no template, so do not delegate one.
-Use the single comparison if the concept has a two-way contrast in it, and prose
-otherwise.
+There are **two** animation templates: `comparison_split` (counts) and
+`curve_plot` (shapes over a range). A concept needing an architecture
+walkthrough, a denoising sequence or items flowing through stages has no
+template, so do not delegate one — use whichever of the two genuinely fits, and
+prose otherwise.
 
 ## Cached scenes
 

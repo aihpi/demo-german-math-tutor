@@ -47,6 +47,10 @@ DATA = _merge(DEFAULTS, json.loads(pathlib.Path(_path).read_text()) if _path els
 
 S, T = DATA["style"], DATA["timing"]
 config.background_color = S["background"]
+# Manim raises on any run_time or wait of 0, and a JSON-authored timing block can
+# hold a zero for any phase. Floor them once here rather than at ten call sites.
+T = {k: (max(0.1, float(v)) if isinstance(v, (int, float)) else v) for k, v in T.items()}
+
 
 # Manim logs a warning and silently falls back on an unknown font, so the render
 # succeeds looking wrong. Resolve once — font_list() hits fontconfig.
@@ -129,6 +133,12 @@ def ratio_text(label, left, right):
 
 
 class ComparisonSplit(Scene):
+    def pause(self, seconds):
+        """Manim raises on wait(0), and a JSON-authored timing block may hold a
+        zero for any phase. Skip instead of crashing."""
+        if seconds and seconds > 1e-3:
+            self.wait(seconds)
+
     def hold_until(self, t):
         """Absolute marks from JSON, but manim only takes durations. Reading the
         renderer clock self-corrects, so one long run_time cannot cascade."""
@@ -143,7 +153,7 @@ class ComparisonSplit(Scene):
         # -- title -------------------------------------------------------------
         title = fit(Text(DATA["title"], **FONT, font_size=42, color=text), 12.0)
         self.play(FadeIn(title, shift=UP * 0.3), run_time=0.9)
-        self.play(title.animate.move_to(UP * 3.45), run_time=T["titleDuration"] - 0.9)
+        self.play(title.animate.move_to(UP * 3.45), run_time=max(0.1, T["titleDuration"] - 0.9))
 
         # -- divider -----------------------------------------------------------
         # Create follows point order: start UP so it draws downward.
@@ -210,6 +220,6 @@ class ComparisonSplit(Scene):
             comp = fit(Text(line, **FONT, font_size=36, color=DATA["comparison"]["highlightColor"]), 13.0)
             comp.move_to([0, Y_COMPARE, 0])
             self.play(FadeIn(comp, shift=UP * 0.25, scale=1.06), run_time=min(1.0, T["comparisonDuration"]))
-            self.wait(max(0.0, T["comparisonDuration"] - 1.0))
+            self.pause(max(0.0, T["comparisonDuration"] - 1.0))
 
-        self.wait(T["endHold"])
+        self.pause(T["endHold"])
