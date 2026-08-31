@@ -100,12 +100,20 @@ next-token probability (`predict_and_verify`) · hyperparameter search
 
 ### WATCH only — one task
 
-**`comparison_split`** — autoregressive vs diffusion decoding · CPU vs GPU cores ·
-quantized vs full-precision · batch 1 vs batch 8 · anything that is purely
-*this against that* with no decision in it.
+**`comparison_split`** — *how many of these versus those.*
+ML: autoregressive vs diffusion decoding · CPU vs GPU cores · quantized vs
+full-precision · batch 1 vs batch 8.
+Elsewhere: chromosome counts in mitosis vs meiosis · energy per kWh from coal vs
+solar · two national budgets · army or population sizes in history · calories in
+two meals · before and after any optimisation.
 
-**`curve_plot`** — convergence vs divergence · scaling laws · learning-rate
-schedules · loss curves over training · any *shape over a range*.
+**`curve_plot`** — *what shape does this take over a range.*
+ML: convergence vs divergence · scaling laws · learning-rate schedules · loss
+curves over training.
+Elsewhere: supply and demand crossing · logistic vs exponential population
+growth · radioactive decay · projectile trajectories · enzyme kinetics ·
+dose–response curves · compound interest · reaction rate against temperature ·
+risk against return.
 
 ### What does not exist
 

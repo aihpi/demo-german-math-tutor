@@ -10,30 +10,53 @@ Five engines exist. Pick by **what the player has to do**, not by subject area.
 | accepting that helping one number hurts another | `balance_tradeoff` |
 | spending a limited budget to find something hidden | `explore_grid` |
 
+**The engines are not about machine learning.** Each one is a *shape of
+understanding*, and every subject has those shapes. A taxonomy is a routing
+problem; a diagnostic threshold is a tradeoff; a dig site is a search under
+budget. Pick by the shape, then dress it in the learner's subject.
+
 ## Fast lookup
 
-**`route_and_sort`** — MoE / expert routing · load balancing · sharding and
-partitioning · classification into >2 classes · cache placement (L1/L2/RAM/disk)
-· scheduling work onto workers · tokenization into vocabulary buckets ·
-attention heads specializing · triage of any kind
+**`route_and_sort`** — *this thing belongs in one of those places.*
+ML: MoE / expert routing · load balancing · sharding · cache placement ·
+tokenization · triage.
+Elsewhere: biological taxonomy (vertebrate classes, kingdoms) · organelles to
+their functions · elements to periodic groups · parts of speech · verb tenses ·
+rock types · climate zones · blood typing · symptoms to body systems · waste
+sorting · library classification · expense categories · instruments to families.
 
-**`parameter_control`** — gradient descent · gradient ascent and policy gradients
-· learning-rate scheduling · momentum · simulated annealing · any optimizer ·
-hill climbing · convergence and divergence · local vs global optima
+**`parameter_control`** — *one knob, and you live with what it does.*
+ML: gradient descent and ascent · learning-rate scheduling · momentum ·
+simulated annealing · local vs global optima.
+Elsewhere: finding a molecule's lowest-energy shape · a physical system settling
+to equilibrium · profit maximisation against price · drug dosage titration ·
+tuning a PID gain · a ball in a potential well · any "search for the bottom of
+something" in physics, chemistry or economics.
 
-**`balance_tradeoff`** — precision vs recall · overfitting and underfitting ·
-bias vs variance · regularization strength · quantization (size vs accuracy) ·
-sensitivity vs specificity · latency vs quality · any threshold or any two
-metrics that fight
+**`balance_tradeoff`** — *helping one number hurts another.*
+ML: precision vs recall · overfitting · bias vs variance · regularization ·
+quantization · latency vs quality.
+Elsewhere: a medical test's sensitivity vs specificity · burden of proof
+(wrongful conviction vs wrongful acquittal) · safety factor vs cost in
+engineering · strength vs weight in materials · inflation vs unemployment ·
+conservation vs development · airport security friction vs risk · speed vs
+accuracy in any human task.
 
-**`explore_grid`** — exploration vs exploitation · hyperparameter search ·
-multi-armed bandits · Bayesian optimization · A/B testing · active learning ·
-Monte Carlo tree search · any search under a budget
+**`explore_grid`** — *something is hidden and your budget runs out first.*
+ML: exploration vs exploitation · hyperparameter search · bandits · Bayesian
+optimization · A/B testing · active learning.
+Elsewhere: choosing where to excavate an archaeological site · which compounds
+to screen in drug discovery · where to drill · which marketing channels to test ·
+an animal choosing foraging patches · which diagnostic tests to order ·
+prospecting, polling, and sampling of any kind.
 
-**`predict_and_verify`** — attention weights · next-token probability ·
-temperature and top-p sampling · softmax itself · logits vs probabilities ·
-calibration and confidence · class scores · embedding similarity · anything
-where the lesson is "your intuition about this distribution is wrong"
+**`predict_and_verify`** — *commit to a guess, then see the truth.*
+ML: attention weights · next-token probability · temperature and top-p ·
+softmax · logits vs probabilities · calibration · embedding similarity.
+Elsewhere: Punnett-square offspring ratios · allele frequencies · dice and card
+probabilities · which word most people say next · diagnostic likelihoods given a
+symptom · election or weather forecasts · anywhere the lesson is "your intuition
+about this distribution is wrong".
 
 ## The decision tree
 

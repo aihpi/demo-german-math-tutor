@@ -196,6 +196,7 @@ def docs_match_reality() -> None:
     built = {p.stem for p in (SKILL / "templates").glob("*.html")} - {"base"}
     docs = {name: (SKILL / name).read_text() for name in
             ("SKILL.md", "references/concept_to_template.md",
+             "references/concept_to_output.md",
              "references/gamedata_format_guide.md", "README.md")}
 
     # Scope is the sentence, not the line: the bug that shipped had the template
@@ -216,6 +217,17 @@ def docs_match_reality() -> None:
         for name in ("references/concept_to_template.md", "references/gamedata_format_guide.md"):
             assert t in docs[name], f"{name} never mentions the built template '{t}'"
     print("  ok  every built template appears in both reference docs")
+
+    # Every engine must carry non-ML uses, or the agent routes school subjects
+    # onto nothing. The README catalogue is the human-facing copy of the same.
+    catalogue = (SKILL / "README.md").read_text()
+    anim = {p.stem for p in (SKILL / "manim_templates").glob("*.py")}
+    for t in sorted(built | anim):
+        assert t in catalogue, f"README catalogue omits '{t}'"
+    for name in ("references/concept_to_template.md", "references/concept_to_output.md"):
+        assert docs[name].count("Elsewhere:") >= 2, (
+            f"{name} lists no non-ML uses — a biology or maths topic has nowhere to route")
+    print(f"  ok  all {len(built | anim)} engines documented with non-ML uses")
 
     # A stale count is the same drift wearing different clothes: "Three engines
     # exist" survived the template-name check because no name sits next to it.
