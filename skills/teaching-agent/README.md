@@ -32,6 +32,7 @@ generate-and-render round trip is 40–70 s.
 |---|---|---|
 | `comparison_split` | two node grids side by side, counters running | dense vs MoE, AR vs diffusion |
 | `curve_plot` | declared curves, with an optional marker walking downhill | gradient descent, overfitting |
+| `pipeline_flow` | one thing through named stages, transforming; `loop` for cycles | transformer pipeline, water cycle |
 
 A template reads everything from `SCENE_DATA_PATH` and is never edited to change
 the concept: dense-vs-MoE and AR-vs-diffusion render from a byte-identical Python
@@ -79,6 +80,7 @@ shape, then dress it in the learner's subject.
 |---|---|---|---|
 | `comparison_split` | how many of **these** versus **those**? | dense vs MoE · AR vs diffusion · CPU vs GPU cores · quantized vs full-precision · batch 1 vs 8 | chromosome counts in mitosis vs meiosis · energy per kWh coal vs solar · two national budgets · army sizes in history · calories in two meals |
 | `curve_plot` | what **shape** does this take over a range? | gradient descent · overfitting · scaling laws · loss curves · convergence vs divergence | supply and demand crossing · logistic vs exponential growth · radioactive decay · projectile paths · enzyme kinetics · dose–response · compound interest |
+| `pipeline_flow` | what happens, **in what order**, and what does it become? | tokenise → embed → attend → predict · RAG lookup · training loop · diffusion sampling | the water cycle · photosynthesis · digestion · rock and nitrogen cycles · DNA → RNA → protein · a bill becoming law · a factory line |
 
 ### PLAY — games (`templates/`)
 
@@ -100,10 +102,9 @@ Ask what the learner has to **do**, not what subject it is:
 
 Non-ML has been exercised, not just asserted: the games were probed across
 biology, maths and geography (all five picked sensibly and rendered), and
-`curve_plot` was checked on supply/demand and logistic growth. What is *not*
-covered by any template is a **process with stages** — tokenise → embed →
-attend, a RAG pipeline, the water cycle. Those want a `pipeline_flow` template
-that does not exist yet.
+`curve_plot` was checked on supply/demand and logistic growth. What no template covers yet is a **spatial architecture walkthrough** (how the
+parts of a network sit together) or a **progressive reveal** (something emerging
+from noise, which is diffusion's own subject).
 
 ## Installing
 

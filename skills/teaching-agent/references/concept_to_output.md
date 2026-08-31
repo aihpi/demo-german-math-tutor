@@ -59,9 +59,10 @@ sounds. Precision vs recall is two curves over a *slider position*, which
 neither template draws. Forcing a concept through the wrong engine renders a
 picture that contradicts the lesson.
 
-Two animation templates exist and they answer different questions:
+Three animation templates exist, answering different questions:
 `comparison_split` for **how many of these versus those**, `curve_plot` for
-**what shape does this take over a range**.
+**what shape does this take over a range**, `pipeline_flow` for **what happens
+in what order**.
 
 **Neither** — history, naming, why a paper mattered, what a library is called.
 Answer in prose. Not everything wants a picture.
@@ -107,6 +108,13 @@ Elsewhere: chromosome counts in mitosis vs meiosis · energy per kWh from coal v
 solar · two national budgets · army or population sizes in history · calories in
 two meals · before and after any optimisation.
 
+**`pipeline_flow`** — *what happens, in what order, and what it becomes.*
+ML: tokenise → embed → attend → predict · a RAG lookup · a training loop ·
+a diffusion sampling loop · a data-preprocessing chain.
+Elsewhere: the water cycle · photosynthesis · digestion · the rock cycle ·
+the nitrogen cycle · protein synthesis (DNA → RNA → protein) · a legislative
+bill becoming law · a manufacturing line · order → payment → dispatch.
+
 **`curve_plot`** — *what shape does this take over a range.*
 ML: convergence vs divergence · scaling laws · learning-rate schedules · loss
 curves over training.
@@ -117,11 +125,11 @@ risk against return.
 
 ### What does not exist
 
-There are **two** animation templates: `comparison_split` (counts) and
-`curve_plot` (shapes over a range). A concept needing an architecture
-walkthrough, a denoising sequence or items flowing through stages has no
-template, so do not delegate one — use whichever of the two genuinely fits, and
-prose otherwise.
+There are **three** animation templates: `comparison_split` (counts),
+`curve_plot` (shapes over a range) and `pipeline_flow` (a process with stages).
+A concept needing a spatial architecture walkthrough or a progressive
+denoising reveal still has no template — use whichever of the three genuinely
+fits, and prose otherwise.
 
 ## Cached scenes
 

@@ -35,7 +35,8 @@ QUALITY = {"l": "480p15", "m": "720p30", "h": "1080p60", "p": "1440p60", "k": "2
 MEDIA = pathlib.Path(tempfile.gettempdir()) / "teaching-agent-media"
 
 REQUIRED = {"comparison_split": ["title", "left", "right"],
-            "curve_plot":       ["title", "domain", "curves"]}
+            "curve_plot":       ["title", "domain", "curves"],
+            "pipeline_flow":    ["title", "stages", "item"]}
 CURVE_TERMS = {"const", "lin", "quad", "sin", "cos", "exp", "inv"}
 
 
@@ -60,6 +61,8 @@ def validate(template: str, data) -> None:
         raise ValueError(f"{template}: SCENE_DATA is missing required field(s): {', '.join(missing)}")
     if template == "curve_plot":
         return _validate_curve_plot(data)
+    if template == "pipeline_flow":
+        return _validate_pipeline_flow(data)
     for side in ("left", "right"):
         s = data.get(side, {})
         if not isinstance(s, dict) or not s.get("label"):
@@ -85,6 +88,34 @@ def validate(template: str, data) -> None:
                              "stagger, sequential or simultaneous")
         if "metric" in s and not isinstance(s["metric"].get("value", 0), (int, float)):
             raise ValueError(f"{template}: {side}.metric.value must be a number")
+
+
+def _validate_pipeline_flow(data) -> None:
+    stages = data.get("stages")
+    if not isinstance(stages, list) or not 2 <= len(stages) <= 6:
+        raise ValueError("pipeline_flow: needs 2-6 stages, got "
+                         f"{len(stages) if isinstance(stages, list) else type(stages).__name__}"
+                         " — one stage is not a process, seven will not fit the frame")
+    for i, st in enumerate(stages):
+        if not isinstance(st, dict) or not st.get("label"):
+            raise ValueError(f"pipeline_flow: stages[{i}] needs a label")
+        if len(st["label"]) > 20:
+            raise ValueError(f"pipeline_flow: stages[{i}].label is {len(st['label'])} chars; "
+                             "keep it under 20 or the box text shrinks to nothing")
+    item = data.get("item")
+    if not isinstance(item, dict):
+        raise ValueError("pipeline_flow: `item` must be an object")
+    labels = item.get("labels")
+    if not isinstance(labels, list) or len(labels) != len(stages):
+        raise ValueError(f"pipeline_flow: item.labels needs exactly one entry per stage "
+                         f"({len(stages)}), got {len(labels) if isinstance(labels, list) else 0}")
+    if not item.get("start") and not labels[0]:
+        raise ValueError("pipeline_flow: item needs a `start` label, or a first entry in `labels`")
+    # A process whose thing never changes is a row of boxes, not a lesson.
+    forms = [item.get("start") or labels[0]] + [l for l in labels if l]
+    if len(set(forms)) < 2:
+        raise ValueError("pipeline_flow: the item is identical at every stage — nothing is "
+                         "being transformed, so there is no process to show")
 
 
 def _validate_curve_plot(data) -> None:

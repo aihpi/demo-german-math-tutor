@@ -48,6 +48,29 @@
         "bias vs variance",
         "model complexity"
       ]
+    },
+    {
+      "file": "transformer_pipeline.json",
+      "template": "pipeline_flow",
+      "match": [
+        "transformer pipeline",
+        "how a transformer works",
+        "tokenise",
+        "tokenize",
+        "embedding pipeline",
+        "text through a model",
+        "inference pipeline"
+      ]
+    },
+    {
+      "file": "water_cycle.json",
+      "template": "pipeline_flow",
+      "match": [
+        "water cycle",
+        "evaporation",
+        "precipitation",
+        "hydrological"
+      ]
     }
   ]
 }

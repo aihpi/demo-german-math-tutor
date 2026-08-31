@@ -1,0 +1,18 @@
+{
+  "title": "The Water Cycle",
+  "stages": [
+    { "label": "Evaporation",   "color": "#FF7500", "note": "sun lifts it" },
+    { "label": "Condensation",  "color": "#4A9EFF", "note": "cools, clusters" },
+    { "label": "Precipitation", "color": "#50C878", "note": "falls" },
+    { "label": "Collection",    "color": "#00C4C4", "note": "rivers, oceans" }
+  ],
+  "item": {
+    "start": "ocean water",
+    "labels": ["vapour", "cloud droplet", "rain", "ocean water"],
+    "color": "#7FD8FF"
+  },
+  "loop": true,
+  "loopLabel": "and round again — nothing is used up",
+  "callout": { "show": true, "label": "the same water, four forms, no beginning",
+               "highlightColor": "#FF7500" }
+}

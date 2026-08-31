@@ -1,0 +1,17 @@
+{
+  "title": "How a Transformer Reads Text",
+  "stages": [
+    { "label": "Tokenise", "color": "#FF7500", "note": "text → ids" },
+    { "label": "Embed",    "color": "#4A9EFF", "note": "ids → vectors" },
+    { "label": "Attend",   "color": "#50C878", "note": "vectors → mixed" },
+    { "label": "Predict",  "color": "#C084FC", "note": "→ next token" }
+  ],
+  "item": {
+    "start": "the cat sat",
+    "labels": ["the | cat | sat", "3 vectors", "context-mixed", "on"],
+    "color": "#FFD23F"
+  },
+  "loop": false,
+  "callout": { "show": true, "label": "every stage rewrites the same thing into a new form",
+               "highlightColor": "#FF7500" }
+}

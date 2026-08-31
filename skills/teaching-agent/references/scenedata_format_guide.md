@@ -203,6 +203,67 @@ Placeholders: none — `curve_plot` text is literal, not templated.
 
 ---
 
+## `pipeline_flow`
+
+One thing travelling through named stages, changing form at each. Use it when
+the lesson is **the sequence** — what happens in what order, and what the thing
+has become by the end. Neither of the other two can show a process.
+
+`loop: true` arrows the last stage back to the first. That flag is the entire
+difference between a pipeline and a cycle.
+
+```json
+{
+  "title": "How a Transformer Reads Text",
+  "stages": [
+    { "label": "Tokenise", "color": "#FF7500", "note": "text → ids" },
+    { "label": "Embed",    "color": "#4A9EFF", "note": "ids → vectors" },
+    { "label": "Attend",   "color": "#50C878", "note": "vectors → mixed" },
+    { "label": "Predict",  "color": "#C084FC", "note": "→ next token" }
+  ],
+  "item": {
+    "start": "the cat sat",
+    "labels": ["the | cat | sat", "3 vectors", "context-mixed", "on"],
+    "color": "#FFD23F"
+  },
+  "loop": false,
+  "callout": { "show": true, "label": "every stage rewrites the same thing into a new form" }
+}
+```
+
+### Fields
+
+| field | required | notes |
+|---|---|---|
+| `title` | yes | one line, top-centre |
+| `stages` | yes | **2–6.** One is not a process; seven will not fit |
+| `stages[].label` | yes | **under 20 characters** or the box text shrinks away |
+| `stages[].color` | no | give each stage its own; they light up in turn |
+| `stages[].note` | no | a few words under the box — what that stage does |
+| `item.start` | yes* | what the thing is before anything happens |
+| `item.labels` | yes | **exactly one per stage** — what it is *after* that stage |
+| `item.color` | no | the travelling chip's colour |
+| `loop` | no | `true` draws the return arrow — use it for cycles |
+| `loopLabel` | no | one short line under the return arrow |
+| `callout.label` | no | the lesson, at the bottom |
+
+\* `item.start` may be omitted if `labels[0]` carries the initial form.
+
+### Making it teach something
+
+- **The item must actually change.** If `labels` repeats the same string at every
+  stage there is no transformation and the build fails — it would be a row of
+  boxes, not a process.
+- **Name forms, not actions.** The stage is the verb (`Embed`); the item label is
+  the noun it has become (`3 vectors`). Putting verbs in both wastes the chip.
+- **Use `loop` honestly.** A training loop and the water cycle come back round; a
+  RAG lookup and tokenisation do not.
+- **4 stages is the sweet spot.** Two feels thin, six squeezes the labels.
+
+Placeholders: none — `pipeline_flow` text is literal.
+
+---
+
 ## Common mistakes
 
 | symptom | cause |
