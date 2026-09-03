@@ -43,9 +43,10 @@ similarity · exploration vs exploitation · hyperparameter search · A/B testin
 bandits
 
 **Both** — worth seeing *and* worth doing. **This list is short on purpose:**
-`comparison_split` is the only animation template and it shows two grids of
-nodes with two counters. A concept earns a WATCH only if that is genuinely its
-shape.
+Three animation templates exist — `comparison_split` (two grids of nodes with
+two counters), `curve_plot` (one or two curves over a range) and `pipeline_flow`
+(one item moving through named stages). A concept earns a WATCH only if one of
+those is genuinely its shape.
 
 | concept | WATCH shows | PLAY makes them do |
 |---|---|---|
@@ -90,8 +91,8 @@ Send them together. Wall time is the slower child (~45 s), not the sum (~60 s).
 | gradient descent | `curve_plot` | `parameter_control` |
 | overfitting | `curve_plot` | `balance_tradeoff` |
 
-Only two concepts genuinely have both today, because `comparison_split` is the
-only animation template. Everything else is single-mode.
+Few concepts genuinely have both. Most are single-mode: a shape to see, or a
+choice to make, rarely both.
 
 ### PLAY only — one task
 
@@ -139,14 +140,18 @@ them automatically when live generation fails.
 
 | topic | file |
 |---|---|
-| dense vs MoE, expert activation | `dense_vs_moe.json` |
-| autoregressive vs diffusion decoding | `ar_vs_diffusion.json` |
+| dense vs MoE, expert activation | `dense_vs_moe.json` (comparison_split) |
+| autoregressive vs diffusion decoding | `ar_vs_diffusion.json` (comparison_split) |
+| gradient descent, learning rate, convergence | `gradient_descent_walk.json` (curve_plot) |
+| overfitting, train vs validation, bias/variance | `overfitting_curves.json` (curve_plot) |
+| how a transformer works, tokenise → predict | `transformer_pipeline.json` (pipeline_flow) |
+| the water cycle | `water_cycle.json` (pipeline_flow) |
 
 ## When a concept does not fit
 
-Only one animation template exists: `comparison_split`, and it only does *this
-versus that*. A concept with no two-way comparison in it — a single process, a
-taxonomy, a proof — has no WATCH mode. Say so and go to PLAY, or to prose.
+The three templates cover counts, curves and sequences. A concept that is none
+of those — a spatial architecture, a taxonomy, a proof — has no WATCH mode. Say
+so and go to PLAY, or to prose.
 
 Do not force a comparison that is not there. Two panels showing the same thing
 teaches less than one honest sentence.

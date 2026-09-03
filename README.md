@@ -43,6 +43,32 @@ Built for the NVIDIA Dev Day demo at GTC. Speaks English and German.
   TUI, inline keyboard buttons on Telegram.
 - **Bilingual.** `/math-tutor de` runs the whole session in German.
 - **Offline dataset.** All 7,473 GSM8K training problems are cached in the repo.
+- **Animations to watch.** A second skill, `teaching-agent`, renders Manim
+  explainers of ML concepts (see below).
+
+## Animations
+
+Two kinds of Manim code live here:
+
+- **Template engines** (`skills/teaching-agent/manim_templates/`) — three fixed
+  scenes whose entire content comes from a JSON file: `comparison_split` (how
+  many of these vs those), `curve_plot` (what shape over a range), and
+  `pipeline_flow` (what happens in what order). Six ready-made scenes sit in
+  `skills/teaching-agent/scene_data/`, and `render_scene.py --author "<concept>"`
+  has the model write a new one. Full docs in
+  [`skills/teaching-agent/README.md`](skills/teaching-agent/README.md).
+- **Standalone scenes** (repo root) — bespoke animations for shapes the engines
+  cannot express: `moe_routing.py` (8 experts, gate, top-2 routing, ManimML
+  forward pass) and `self_attention.py` (token arcs plus a building heatmap).
+
+```bash
+manim -qh moe_routing.py MoERoutingScene          # 1080p60 → media/videos/…
+manim -qh self_attention.py SelfAttentionScene
+```
+
+Both need `manim` and, for `moe_routing.py`, `manim-ml`. ManimML 0.0.24 is not
+maintained against manim ≥ 0.19; the standalone scene carries the one-line
+compatibility patch it needs.
 
 ## Setup
 
@@ -122,6 +148,9 @@ skills/math-tutor/SKILL.md          the tutor itself — the actual deliverable
 skills/math-tutor/tutor_session.py  session state: serves choices, grades picks
 skills/math-tutor/figures.py        draws geometry as animated SVG
 skills/math-tutor/gsm8k_loader.py   problem sampling, also usable standalone
+skills/teaching-agent/              WATCH/PLAY skill: 3 Manim engines, 5 game engines
+skills/teaching-agent/scene_data/   ready-made SCENE_DATA JSON for the engines
+moe_routing.py, self_attention.py   standalone Manim scenes (MoE routing, attention)
 data/gsm8k_cache.jsonl              7,473 problems, parsed and topic-tagged
 data/math_cache.jsonl               97 MATH geometry problems, diagram-free
 data/hard_problems.json             route overlay for the curated MATH problem
@@ -138,7 +167,8 @@ config/hermes_config.yaml      reference config, documents both clarify timeouts
   the explanations). For the other 7,469 the model authors the choices once per
   session, so their quality varies with the model. `/math-tutor demo` never does
   this.
-- **No visual explanations.** Manim animations were scoped out for now.
+- **No visual explanations inside the math tutor.** The Manim animations live in
+  the separate `teaching-agent` skill and are not yet wired into a tutoring step.
 - The `hard` track samples 97 MATH geometry problems. That is what survives two
   filters: Level 1-3 (4-5 overrun a demo slot) and no Asymptote diagram — 40% of
   MATH geometry ships a picture that is required to solve it and cannot be
@@ -157,7 +187,7 @@ config/hermes_config.yaml      reference config, documents both clarify timeouts
 - [ ] Local inference on the DGX Spark (vLLM, `gemma-4-31b`) — swap `base_url`
       in `custom_providers`, nothing else changes
 - [ ] Verify the tutor flow on Telegram (inline keyboard buttons)
-- [ ] Decide on Manim animations for 2–3 problem types
+- [ ] Wire a `teaching-agent` animation into 2–3 math-tutor problem types
 - [ ] Model swap test against Soofi S
 
 ## References

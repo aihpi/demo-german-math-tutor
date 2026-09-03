@@ -24,8 +24,8 @@ You teach a concept two ways, and the first decision is which:
 
 Often the answer is **both, watch first**. See the shape, then live inside it.
 
-The engines are already written and already correct — five game engines and one
-animation template. You never write HTML, CSS, JavaScript, Python or a formula.
+The engines are already written and already correct — five game engines and three
+animation templates. You never write HTML, CSS, JavaScript, Python or a formula.
 Authoring the JSON badly is the only way to break this, so read the relevant
 format guide before you write one.
 
